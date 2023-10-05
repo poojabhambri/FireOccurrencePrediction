@@ -1,0 +1,455 @@
+{\rtf1\ansi\deff0\nouicompat{\fonttbl{\f0\fnil\fcharset0 Courier New;}}
+{\colortbl ;\red192\green80\blue77;\red0\green77\blue187;\red0\green176\blue80;\red255\green0\blue0;}
+{\*\generator Riched20 10.0.17134}\viewkind4\uc1 
+\pard\cf1\f0\fs22\lang1033 /* THIS first bit in RED (if my colors stay) is all just conditioning of the datasets */\par
+options ls=80 ps=20000; run;\par
+/*(proc import file="c:/work/ont-ltg/fuels/meanfuels20by20.xls" out=fuels DBMS=EXCEL replace;\par
+run;\par
+proc sort; by grid;\par
+run;*/\par
+proc import file="C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\alberta_static.csv" out=zones_tmp DBMS=CSV replace;\par
+run;\par
+data zones;\par
+  set zones_tmp;\par
+  grid=fishnet_ab;\par
+  lat=Y;\par
+  long=X;\par
+  keep grid zone_code zone_name NSR NSRname lat long;\par
+run;\par
+proc sort; by grid;\par
+run;\par
+\par
+data fires;\par
+  infile "C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\fires\\firegrid1990-2014.dat";\par
+  input grid lat long year mon day numfire;\par
+  drop lat long;\par
+run;\par
+proc sort data=fires; by grid year mon day;\par
+run;\par
+\par
+data ltgnite ltgday;\par
+   infile "C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\ltgwork\\ltg1983-2016-10by10-five-period.dat";\par
+   input grid lat long year mon day period neg pos;\par
+   if neg=0 and pos=0 then delete;\par
+   if period=0 or period=4 then do; neg0=neg; pos0=pos; drop pos neg lat long; output ltgnite;end;\par
+    else do; neg1=neg; pos1=pos; drop pos neg lat long ; output ltgday;end;\par
+  run;\par
+proc sort data=ltgnite; by grid year mon day period;\par
+run;\par
+proc means noprint;\par
+  by grid year mon day;\par
+  var neg0 pos0;\par
+  output out=ltgnite2 sum=neg0 pos0;\par
+  run;\par
+  quit;\par
+proc sort data=ltgday; by grid year mon day period;\par
+run;\par
+proc means noprint;\par
+  by grid year mon day;\par
+  var neg1 pos1;\par
+  output out=ltgday2 sum=neg1 pos1;\par
+  run;\par
+  quit;\par
+data ltg1;\par
+  merge ltgnite2 ltgday2;  by grid year mon day;\par
+  if neg1=. then neg1=0;\par
+  if pos1=. then pos1=0;\par
+  if neg0=. then neg0=0;\par
+  if pos0=. then pos0=0;\par
+  totltg0=neg0+pos0;\par
+  totltg1=neg1+pos1;\par
+  pos=pos1+pos0;\par
+  neg=neg1+neg0;\par
+  totltg=totltg0+totltg1;\par
+  if totltg0>totltg1 then timing="NIGHT";\par
+  else timing="DAY";\par
+*  if totltg0=. and totltg1=. and totltg>0 then timing=9;\par
+  drop totltg0 totltg1 neg1 pos1 neg0 pos0;\par
+run;\par
+\par
+data ltgfire;\par
+  merge fires ltg1 ; by grid year mon day;\par
+  if numfire=. then numfire=0;\par
+*  drop totltg0 totltg1 neg1 pos1 neg0 pos0;\par
+run;\par
+\par
+proc datasets nofs;\par
+  delete ltgone ltgnite ltgday;\par
+run;\par
+quit;\par
+data wx;\par
+*  infile "C:\\BMW\\work\\albertafop\\interp2018\\FWIgrid10-AB-1983-2016.out";\par
+  infile "C:\\BMW\\work\\work2018\\wx-work\\FWIgrid10-AB-1983-2016.out";\par
+  input grid year mon day temp rh ws rain ffmc dmc dc isi bui fwi ;\par
+  keep grid year mon day ffmc dmc dc isi bui rh ws rain;\par
+run;\par
+\par
+proc sort DATA=WX ; by grid year mon day;run;\par
+proc sort DATA=LTGFIRE ; by grid year mon day;run;\par
+data some1;\par
+  merge wx ltgfire;\par
+   by grid year mon day;\par
+  if numfire=. then numfire=0;\par
+  if totltg=. then totltg=0;\par
+run;\par
+\par
+data all;\par
+  merge some1 zones;  by grid;\par
+  if year<1990 then delete;\par
+  if year>2014 then delete;\par
+    *  keep region year mon day grid dmc dc perpos perclosed ffmc isi totltg numfire neg pos latitude longitude;\par
+run;\par
+proc datasets nofs;\par
+  delete wx sdmc ltgfire some1 fuels zones;\par
+run;\par
+quit;\par
+\cf0\par
+\cf2 /* THE ARRIVAL MODELS in BLUE*/\par
+data new;\par
+  set all;\par
+   *  JUST a rough seasonal seperation preflush/post flush;\par
+  if mon<6 then season="Spring";\par
+  else season="Summer";\par
+\par
+  if mon<5 or mon>9  then delete;  * for modelling...not enough lightning fire data outside these dates;\par
+  * if zone_code=. then delete;\par
+\par
+  if nsr=. then delete;\par
+  if FFMC<0 then FFMC=.;\par
+  if DMC<0 then DMC=.;\par
+  if WS<0 then WS=.;\par
+  if zone_code=10 then zone_code=9;\par
+\par
+/* IMPORTANT\'85RECASTING some small NSRS  that had few ltg fires into neighbors */\par
+  if nsr=15 then nsr=1;\par
+  if nsr=18 then nsr=11;\par
+  if nsr=14 then nsr=11;\par
+  if nsr=5 then nsr=12;\par
+  if nsr=7 then nsr=8;\par
+  int_season=0;   * deafult to summer;\par
+  ffmc_season=0;  * default to summer;\par
+  if Season="Spring" then do;\par
+    int_season=-2.33;\par
+    FFMC_season=0.023;\par
+  end;\par
+\par
+  int_first=2.54;\par
+  dmc_first=-0.013;\par
+  ws_first=-0.041;\par
+  /* the complex set of coefficients here is how they change with NSR....and the interactions \par
+     between NSR and the core predictors...SO this is what all this next stuff is about\par
+  */\par
+  int_nsr=0; ffmc_nsr=0;dmc_nsr=0; dc_nsr=0;\par
+  if NSR=1 then do;\par
+     int_nsr = -0.279;\par
+     ffmc_nsr= 0.0011;\par
+     DMC_nsr=  0.0033;\par
+     DC_nsr=  -0.0005;\par
+  end;\par
+  if NSR=2 then do;\par
+    int_nsr = 0.8539;\par
+    ffmc_nsr= -0.014;\par
+    DMC_nsr=  0.0064;\par
+    DC_nsr=  -0.0007;\par
+  end;\par
+  if NSR=3 then do;\par
+    int_nsr = -0.768 ;\par
+    ffmc_nsr=  0.0099;\par
+    DMC_nsr=   -0.0043;\par
+    DC_nsr=    0.0002;\par
+  end;\par
+  if NSR=4 then do;\par
+    int_nsr =  0.466;\par
+    ffmc_nsr=  -0.0056;\par
+    DMC_nsr=   0.0232;\par
+    DC_nsr=    -0.0023;\par
+  end;\par
+  if NSR=6 then do;\par
+    int_nsr =  -0.373;\par
+    ffmc_nsr=  0.0105;\par
+    DMC_nsr=   -0.0057;\par
+    DC_nsr=    -0.0014;\par
+  end;\par
+  if NSR=8 then do;\par
+    int_nsr =  1.45;\par
+    ffmc_nsr=  -0.0221;\par
+    DMC_nsr=   0.0098;\par
+    DC_nsr=    -0.002;\par
+  end;\par
+  if NSR=9 then do;\par
+    int_nsr =  1.523;\par
+    ffmc_nsr=  -0.0307;\par
+    DMC_nsr=   0.0032;\par
+    DC_nsr=    0.0002;\par
+  end;\par
+  if NSR=10 then do;\par
+    int_nsr =  1.1089;\par
+    ffmc_nsr=  -0.0150;\par
+    DMC_nsr=   0.0225;\par
+    DC_nsr=    -0.0023;\par
+  end;\par
+  if NSR=11 then do;\par
+    int_nsr =  1.19;\par
+    ffmc_nsr=  -0.0164;\par
+    DMC_nsr=   0.0217;\par
+    DC_nsr=    -0.0028;\par
+  end;\par
+  if NSR=12 then do;\par
+    int_nsr =  -1.0345;\par
+    ffmc_nsr=  0.0039;\par
+    DMC_nsr=   -0.0042;\par
+    DC_nsr=    0.0019;\par
+  end;\par
+  if NSR=13 then do;\par
+    int_nsr =  -1.47;\par
+    ffmc_nsr=  -0.0009;\par
+    DMC_nsr=   0.0042;\par
+    DC_nsr=    0.0022;\par
+  end;\par
+\par
+  pr0=(-4.223+int_nsr+int_season+int_first) \par
+      + ffmc*(0.0447+FFMC_nsr+FFMC_season)\par
+      + dmc*(0.0186+dmc_first+DMC_nsr)\par
+      +  dc*(-0.0026+DC_nsr)\par
+      + ws*(-0.01+WS_first);\par
+  pr1=(-4.223+int_nsr+int_season+0) \par
+      + ffmc*(0.0447+FFMC_nsr+FFMC_season)\par
+      + dmc*(0.0186+0+DMC_nsr)\par
+      +  dc*(-0.0026+DC_nsr)\par
+      + ws*(-0.01+0);\par
+  probarr0=exp(pr0)/(1+exp(pr0)); \par
+  probarr1=exp(pr1)/(1+exp(pr1));  \par
+/* PROBArr0=probability the fire arrives on the day it is ignited by ltg   Porbarr1 is it arrives any day after ignition\par
+*/\par
+\par
+  keep zone_code nsrname nsr grid year mon day probarr0 probarr1 rh ws rain ffmc dmc dc Psusf_c3 isi totltg pos timing numfire; \par
+run;\par
+\par
+\cf3\par
+/*  This is the probability of ignition of a holdover */\par
+data model;\par
+  set new;\par
+*  if timing="" then timing="NIGHT";\par
+  if totltg>0 and pos>=0 then perpos=pos/totltg*100;\par
+  else perpos=20;\par
+  if dmc=. then delete;\par
+  if zone_code=. then delete;\par
+  if zone_code=10 then zone_code=9;\par
+/* IMPORTANT\'85RECASTING some small NSRS  that had few ltg fires into neighbors */\par
+  if nsr=. then delete;\par
+  if nsr=15 then nsr=1;\par
+  if nsr=18 then nsr=11;\par
+  if nsr=14 then nsr=11;\par
+  if nsr=5 then nsr=12;\par
+  if nsr=7 then nsr=8;\par
+  if dmc=. then delete;\par
+  if rain>0.2 then dry="WET";\par
+  else dry="DRY"; \par
+  if mon<6 then do;\par
+     season="Spring";\par
+      int_season=0.3201;\par
+  end;\par
+  else do;\par
+    season="Summer";\par
+    int_season=0.0;\par
+  end;\par
+\par
+  /* just a categorical classification of density to get at rainfall*/\par
+  if totltg>17 then dense=-1.51;  /*extreme*/\par
+  else if totltg>6 then dense=-0.48;\par
+  else if totltg>2 then dense=0.0;\par
+  else dense=0.2332;\par
+\par
+/* SEE the definition in the data conditioning part for this\par
+  IF nighttime ltg total (9pm to 6am)is > daytime lightning total (6a to 9pm)  then its NIGHT  otherwise DAY  \par
+*/\par
+\par
+  if TIMING="NIGHT" then int_timing=0.406;\par
+  else int_timing=0;\par
+\par
+  int_nsr=0; ffmc_nsr=0;dmc_nsr=0; \par
+  if NSR=1 then do;\par
+    int_nsr = 1.43;\par
+    ffmc_nsr= -0.0193;\par
+    DMC_nsr=  0.0027;\par
+  end;\par
+  if NSR=2 then do;\par
+    int_nsr = 2.67;\par
+    ffmc_nsr= -0.0398;\par
+    DMC_nsr=  0.0029;\par
+  end;\par
+  if NSR=3 then do;\par
+    int_nsr = 1.55 ;\par
+    ffmc_nsr=  -0.0139;\par
+    DMC_nsr=   -0.0093;\par
+  end;\par
+  if NSR=4 then do;\par
+    int_nsr = -0.6778;\par
+    ffmc_nsr=  0.0065;\par
+    DMC_nsr=   -0.0096;\par
+  end;\par
+  if NSR=6 then do;\par
+    int_nsr =  0.3966;\par
+    ffmc_nsr=  -0.0051;\par
+    DMC_nsr=   0.0014;\par
+  end;\par
+  if NSR=8 then do;\par
+    int_nsr =  0.9429;\par
+    ffmc_nsr=  -0.0188;\par
+    DMC_nsr=   -0.0030;\par
+  end;\par
+  if NSR=9 then do;\par
+    int_nsr = 3.388;\par
+    ffmc_nsr=  -0.0579;\par
+    DMC_nsr=   0.0006;\par
+  end;\par
+  if NSR=10 then do;\par
+    int_nsr =  0.776;\par
+    ffmc_nsr=  -0.0197;\par
+    DMC_nsr=   0.0204;\par
+  end;\par
+  if NSR=11 then do;\par
+    int_nsr =  1.688;\par
+    ffmc_nsr=  -0.0292;\par
+    DMC_nsr=   0.0190;\par
+  end;\par
+  if NSR=12 then do;\par
+    int_nsr =  1.566;\par
+    ffmc_nsr=  -0.028;\par
+    DMC_nsr=   0.0025;\par
+  end;\par
+  if NSR=13 then do;\par
+    int_nsr =  4.80;\par
+    ffmc_nsr=  -0.062;\par
+    DMC_nsr=   0.0018;\par
+  end;\par
+\par
+  f=(-11.873 + int_nsr + int_timing+int_season+dense)\par
+       +dmc*(0.0179+DMC_nsr)\par
+        +dc*(0.0020)\par
+         +ffmc*(0.0709+ffmc_nsr)-0.0097*perpos;\par
+\par
+  probign=exp(f)/(1.0+exp(f));\par
+\par
+  if probign>0.04 then probign=0.04+(probign-0.04)*0.25;   \par
+/* this is just a quick fix to addressing the roll over flaw in the GLM linearity \'85..SIMPLE for now */\par
+\par
+  date=mdy(mon,day,year);\par
+  if year<2000 then jds=juldate(date)-(year-1900)*1000;\par
+  if year>1999 then jds=juldate(date)-(year-2000)*1000;\par
+  keep grid jds year mon day probign probarr0 probarr1 totltg nsr ffmc dc dmc numfire;\par
+run;\par
+\par
+data ltgnew;\par
+   infile "C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\ltgwork\\ltg1983-2016-10by10-five-period.dat";\par
+   input grid lat long year mon day period neg pos;\par
+proc sort; by year grid mon day period;\par
+run;\par
+\par
+\cf0 data ltg0 ltg1 ltg2 ltg3 ltg4;\par
+  set ltgnew;\par
+  if neg=0 and pos=0 then delete;\par
+  if period=0 then do; tot0=neg+pos; drop pos neg period lat long; output ltg0;end;\par
+  if period=1 then do; tot1=neg+pos; drop pos neg period lat long ; output ltg1;end;\par
+  if period=2 then do; tot2=neg+pos; drop pos neg period lat long ; output ltg2;end;\par
+  if period=3 then do; tot3=neg+pos; drop pos neg period lat long ; output ltg3;end;\par
+  if period=4 then do; tot4=neg+pos; drop pos neg period lat long ; output ltg4;end;\par
+run;\par
+proc sort data=ltg0; by grid year mon day;\par
+run;\par
+proc sort data=ltg1; by grid year mon day;\par
+run;\par
+proc sort data=ltg2; by grid year mon day;\par
+run;\par
+proc sort data=ltg3; by grid year mon day;\par
+run;\par
+proc sort data=ltg4; by grid year mon day;\par
+run;\par
+data allltg;\par
+  merge ltg0 ltg1 ltg2 ltg3 ltg4; by grid year mon day;\par
+  run;\par
+data allnew;\par
+  merge model allltg; by grid year mon day;\par
+  if totltg=. then delete;\par
+  if tot0=. then tot0=0;\par
+  if tot1=. then tot1=0;\par
+  if tot2=. then tot2=0;\par
+  if tot3=. then tot3=0;\par
+  if tot4=. then tot4=0;\par
+  totltg2=tot0+tot1+tot2+tot3+tot4;\par
+run;\par
+proc sort data=allnew; by year mon day;\par
+proc means data=allnew noprint;\par
+    by year;\par
+\tab var totltg numfire;\par
+\tab output out=newltgsummary sum=totltgoverall totfires;\par
+\tab run;\par
+\tab quit;\par
+proc sort data=allnew; by grid;run;\par
+proc import file="C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\alberta_static.csv" out=zones_tmp DBMS=CSV replace;\par
+run;\par
+data zones;\par
+  set zones_tmp;\par
+  grid=fishnet_ab;\par
+  lat=Y;\par
+  long=X;\par
+  keep grid zone_code zone_name NSR NSRname lat long;\par
+run;\par
+proc sort; by grid;\par
+run;\par
+data newzone2;\par
+  set zones;\par
+  newgrid=_n_;\par
+  keep grid newgrid lat long;\par
+run;\par
+data allnew2;\par
+  merge allnew newzone2; by grid;\par
+  if probign=. or probarr0=. then delete;\par
+run;\par
+\par
+proc sort data=allnew2;  by year mon day grid;run;\par
+proc means data=allnew2 noprint;\par
+    by year;\par
+\tab var totltg numfire;\par
+\tab output out=newltgsummary sum=totltgoverall totfires;\par
+\tab run;\par
+\tab quit;\par
+\par
+\par
+\cf4 /*  THE IMPORTANT BIT OF OUTPUT of the file with PROBAIBLITIES \par
+JUST a BIT ASCII SPACE SEPERATED FILE\par
+*/\par
+data _null_;\par
+   set allnew2;\par
+   file "C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\modelling\\year1990-2014.ready-new";\par
+    if mon>4 and mon<10 then \par
+    put newgrid 6.0 lat 8.3 long 9.3 year 5.0 jds 4.0 probign 9.5 probarr0 9.5 probarr1 9.5 totltg 6.0 numfire 5.0 nsr 4.0 tot0 6.0 tot1 6.0 tot2 6.0 tot3 6.0 tot4 6.0 dmc 5.0 dc 5.0;\par
+run;\par
+\par
+\cf0\par
+\par
+/* arrivals---getting real data to compare predictions against*/\par
+data arrivals;\par
+  infile "C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\startdate\\fire_ARRIVAL_list1990-2014-10km.loc";\par
+  input year  mon day lat long;\par
+  fire=1;\par
+  date=mdy(mon,day,year);\par
+  if year<2000 then jds=juldate(date)-(year-1900)*1000;\par
+  if year>1999 then jds=juldate(date)-(year-2000)*1000;\par
+run;\par
+proc sort; by year jds;\par
+proc means noprint;\par
+  by year jds mon day;\par
+  var fire;\par
+  output out=total n=numfire;\par
+run;\par
+quit;\par
+/* outputting real arrivals  */\par
+data _null_;\par
+  set total;\par
+  file "C:\\Users\\Mikew\\Dropbox\\AB-FOP-WMST project\\work2018\\modelling\\fires_arrivals1990-2014.dat";\par
+  if jds>=121 and jds<280 then put year 5.0 jds 4.0 numfire 6.0;\par
+run;\par
+\par
+}
+ 
