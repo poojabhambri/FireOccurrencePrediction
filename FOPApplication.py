@@ -1505,7 +1505,7 @@ def make_menu():
     selected_date = st.sidebar.date_input("Select a date", datetime.date.today())
     if selected_date:
         st.session_state.selected_date = selected_date
-    interval = st.sidebar.number_input("Select a confidence interval",min_value=0, max_value=100)
+    interval = st.sidebar.number_input("Select a confidence interval",min_value=0, max_value=100, value=95)
     if interval:
         st.session_state.interval = interval
     # Create a button to trigger an action when clicked 
