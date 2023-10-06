@@ -1550,14 +1550,11 @@ def get_png_files_in_folder(folder_path):
 
 def show_outputs(folder_path):
     png_files = get_png_files_in_folder(folder_path)
-    # st.write(png_files)
-    print("loookie here sir:",png_files)
     if png_files:
         options = st.multiselect(
         'Which map(s) do you want displayed?',
         png_files)
         st.session_state.options = options
-        # st.write(options)
         show(folder_path)
     else:
 
@@ -1565,8 +1562,6 @@ def show_outputs(folder_path):
 
 
 def show(folder_path):
-    st.write(st.session_state.options)
-    print("options:", st.session_state.options)
     for idx, png_file in enumerate(st.session_state.options):
         with open(os.path.join(folder_path, png_file), 'rb') as f:
             png_image = f.read()
