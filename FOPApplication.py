@@ -1515,7 +1515,6 @@ def make_menu():
     interval = st.sidebar.number_input("Select a confidence interval",min_value=0, max_value=100, value=95)
     if interval:
         st.session_state.interval = interval
-    # Create a button to trigger an action when clicked
     
     choices = ("Select a Model","Human", "Lightning")
     model = st.sidebar.selectbox("Select a Model", choices)
@@ -1566,7 +1565,6 @@ def show(folder_path):
         with open(os.path.join(folder_path, png_file), 'rb') as f:
             png_image = f.read()
             st.image(png_image, caption=png_file, use_column_width=True)
-            # Generate a unique key for each download button
             download_button_key = f"download_button_{idx}"
             st.download_button(
                 label=f"Download {png_file}",
@@ -1667,19 +1665,29 @@ if __name__ == "__main__":
     clearSystemStateDB()
     make_menu()
     
-    if (
-        st.session_state.model is not None and
-        st.session_state.raw_weather is not None and
-        st.session_state.lightning is not None and
-        st.session_state.history is not None and  
-        st.session_state.selected_date is not None and
-        st.session_state.model_run == True
-    ):
-        if st.session_state.model == "Human":
+    if st.session_state.model == "Human":
+        if (
+            st.session_state.model is not None and
+            st.session_state.raw_weather is not None and
+            st.session_state.history is not None and  
+            st.session_state.selected_date is not None and
+            st.session_state.model_run == True
+        ):
             run_human_fop_model( __config,"intermediate_output")
             show_outputs("intermediate_output")
-        elif st.session_state.model == "Lightning":
+        else:
+            st.warning("Please select files and choose a date.")
+
+    elif st.session_state.model == "Lightning":
+        if (
+            st.session_state.model is not None and
+            st.session_state.raw_weather is not None and
+            st.session_state.lightning is not None and
+            st.session_state.history is not None and  
+            st.session_state.selected_date is not None and
+            st.session_state.model_run == True
+        ):
             run_lightning_model(__config,"intermediate_output")
             show_outputs("intermediate_output")
-    else:
-        st.warning("Please select files and choose a date.")
+        else:
+            st.warning("Please select files and choose a date.")
