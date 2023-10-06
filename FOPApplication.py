@@ -1488,6 +1488,8 @@ def make_menu():
         st.session_state.interval = None
     if 'show_outputs' not in st.session_state:
         st.session_state.show_outputs = False
+    if 'model' not in st.session_state:
+        st.session_state.model = None
     raw_weather_file = st.file_uploader("Load raw weather data input...", type=["csv", "txt"])
     if raw_weather_file:
         file_contents = raw_weather_file .read()
@@ -1506,6 +1508,7 @@ def make_menu():
         with open("temp_history.csv", "w") as temp_file:
             temp_file.write(file_contents.decode("utf-8"))
         st.session_state.history = "temp_history.csv"
+    st.sidebar.title("Model Options")    
     selected_date = st.sidebar.date_input("Select a date", datetime.date.today())
     if selected_date:
         st.session_state.selected_date = selected_date
@@ -1513,6 +1516,10 @@ def make_menu():
     if interval:
         st.session_state.interval = interval
     # Create a button to trigger an action when clicked
+    
+    choices = ("Select a Model","Human", "Lightning")
+    model = st.sidebar.selectbox("Select a Model", choices)
+    st.session_state.model = model
     if st.sidebar.button("Run"):
         st.session_state.model_run = True
         st.session_state.show_outputs = False
@@ -1664,22 +1671,20 @@ if __name__ == "__main__":
     __config.read('config.ini')
     clearSystemStateDB()
     make_menu()
-    st.sidebar.title("Model Options")
-    choices = ("Select a Model","Human", "Lightning")
-    model = st.sidebar.selectbox("Select a Model", choices)
-    if model:
-        if (
-            st.session_state.raw_weather is not None and
-            st.session_state.lightning is not None and
-            st.session_state.history is not None and  
-            st.session_state.selected_date is not None and
-            st.session_state.model_run == True
-        ):
-            if model == "Human":
-                run_human_fop_model( __config,"intermediate_output")
-                show_outputs("intermediate_output")
-            elif model == "Lightning":
-                run_lightning_model(__config,"intermediate_output")
-                show_outputs("intermediate_output")
-        else:
-            st.warning("Please select files and choose a date.")
+    
+    if (
+        st.session_state.model is not None and
+        st.session_state.raw_weather is not None and
+        st.session_state.lightning is not None and
+        st.session_state.history is not None and  
+        st.session_state.selected_date is not None and
+        st.session_state.model_run == True
+    ):
+        if st.session_state.model == "Human":
+            run_human_fop_model( __config,"intermediate_output")
+            show_outputs("intermediate_output")
+        elif st.session_state.model == "Lightning":
+            run_lightning_model(__config,"intermediate_output")
+            show_outputs("intermediate_output")
+    else:
+        st.warning("Please select files and choose a date.")
