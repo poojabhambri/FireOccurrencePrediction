@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+from datetime import timedelta
 
 if 'show_outputs' not in st.session_state:
     st.session_state.show_outputs = False
@@ -8,13 +9,13 @@ def show_outputs(folder_path):
     png_files = get_png_files_in_folder(folder_path)
     if png_files:
         if st.session_state.use_range:
-            date = st.slider(
-            "Which date would you like to see?",
-            min_value = st.session_state.selected_date,
-            value= st.session_state.selected_date,
-            max_value= st.session_state.end_date,
-            format="MM/DD/YY")
-            selected_files = [file for file in png_files if str(date) in file]
+            start_date, end_date = st.session_state.selected_date, st.session_state.end_date
+            delta = timedelta(days=1)
+            date_list = [start_date + timedelta(days=x) for x in range((end_date - start_date).days + 1)]
+
+            selected_dates = st.multiselect("Select dates", date_list, default=date_list)
+            selected_files = [file for file in png_files if any(str(date) in file for date in selected_dates)]
+         
             for idx, png_file in enumerate(selected_files):
                 with open(os.path.join(folder_path, png_file), 'rb') as f:
                     png_image = f.read()
