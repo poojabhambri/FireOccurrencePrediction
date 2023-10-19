@@ -11,7 +11,6 @@ def show_outputs(folder_path):
             value= st.session_state.selected_date,
             max_value= st.session_state.end_date,
             format="MM/DD/YY")
-            st.write("Start time:", date)
             selected_files = [file for file in png_files if str(date) in file]
             for idx, png_file in enumerate(selected_files):
                 with open(os.path.join(folder_path, png_file), 'rb') as f:
