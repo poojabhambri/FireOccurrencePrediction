@@ -1,6 +1,9 @@
 import streamlit as st
 import os
 
+if 'show_outputs' not in st.session_state:
+    st.session_state.show_outputs = False
+
 def show_outputs(folder_path):
     png_files = get_png_files_in_folder(folder_path)
     if png_files:
