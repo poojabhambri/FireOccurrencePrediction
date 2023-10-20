@@ -1745,12 +1745,12 @@ def is_date_in_range(selected_date, model_type):
     year = selected_date.year
 
     if model_type == "Human":
-        start_date = datetime.date(year, 5, 1)
-        end_date = datetime.date(year, 9, 30)
+        start_date = datetime.date(year, 3, 1)
+        end_date = datetime.date(year, 10, 31)
     elif model_type == "Lightning":
         # Define the range for the Lightning model
         start_date = datetime.date(year, 6, 1)
-        end_date = datetime.date(year, 8, 31)
+        end_date = datetime.date(year, 9, 30)
     else:
         # If model_type is not "Human" or "Lightning," return True for "None"
         return True
