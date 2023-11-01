@@ -9,7 +9,7 @@ if 'prob' not in st.session_state:
     st.session_state.prob = False
 
 def show_outputs(folder_path):
-    human_dict = {'Fine Fuel Moisture Code':'ffmc', 'Human-Caused Fire Arrival Predictions':'probability'}
+    human_dict = {'Fine Fuel Moisture Code':'ffmc', 'Human-Caused Fire Arrival Probabilities':'probability'}
     lightning_dict = {'Lightning-Caused Fire Arrival Predictions':'arrival','Drought Code':'dc', 'Duff Mositure Code':'dmc', 'Probability of Lightning Fire Arrivals':'probarr0',
             'Probability of Lightning Fire Ignitions':'probign', 'Lightning-Caused Fire Holdover Predictions':'holdover', 'Total Lightning Strikes':'totltg'}
     png_files = get_png_files_in_folder(folder_path)
