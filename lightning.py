@@ -19,7 +19,7 @@ import timeit  # Used for measuring code execution time.
 from decimal import Decimal  # Used to round probabilities to an exact decimal as opposed to float.
 import datetime  # Used to determine the day of year (Julian), as well as date-based arithmetic.
 import random  # Used to generate a random number seed for the C simulation tool.
-# import geopandas as gpd  # This and the following imports are used for mapping purposes.
+import geopandas as gpd  # This and the following imports are used for mapping purposes.
 import descartes
 import matplotlib.pyplot as plt
 from shapely.geometry import Point, Polygon
