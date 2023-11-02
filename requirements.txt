@@ -1,3 +1,5 @@
+python==3.7.5
+geos
 pandas==0.25.2 
 pillow==6.2.0 
 descartes==1.1.0 
