@@ -15,37 +15,37 @@ import os
 import sys
 import multiprocessing
 import pandas as pd
-import math
-from tkinter import Tk  # Used as the GUI framework.
-from tkinter import Menu
-from tkinter import Toplevel
-from tkinter import Entry
-from tkinter import Label
-from tkinter import Button
-from tkinter import Frame
-from tkinter import Text
-from tkinter import Scrollbar
-from tkinter import X
-from tkinter import Y
-from tkinter import LEFT
-from tkinter import RIGHT
-from tkinter import BOTH
-from tkinter import TOP
-from tkinter import YES
-from tkinter import END
-from tkinter import BooleanVar
-from tkinter import IntVar
-from tkinter import StringVar
-from tkinter import Radiobutton
-from tkinter import OptionMenu
-from tkinter.filedialog import askopenfilename
-from tkinter.filedialog import askdirectory
-from tkinter.filedialog import asksaveasfilename
-import tkinter.messagebox as messagebox
-from PIL import ImageTk, Image
+# import math
+# from tkinter import Tk  # Used as the GUI framework.
+# from tkinter import Menu
+# from tkinter import Toplevel
+# from tkinter import Entry
+# from tkinter import Label
+# from tkinter import Button
+# from tkinter import Frame
+# from tkinter import Text
+# from tkinter import Scrollbar
+# from tkinter import X
+# from tkinter import Y
+# from tkinter import LEFT
+# from tkinter import RIGHT
+# from tkinter import BOTH
+# from tkinter import TOP
+# from tkinter import YES
+# from tkinter import END
+# from tkinter import BooleanVar
+# from tkinter import IntVar
+# from tkinter import StringVar
+# from tkinter import Radiobutton
+# from tkinter import OptionMenu
+# from tkinter.filedialog import askopenfilename
+# from tkinter.filedialog import askdirectory
+# from tkinter.filedialog import asksaveasfilename
+# import tkinter.messagebox as messagebox
+# from PIL import ImageTk, Image
 from lightning import LightningFireOccurrencePrediction
 from human import HumanFireOccurrencePrediction
-import ctypes # To get the custom taskbar logo icon to show up
+# import ctypes # To get the custom taskbar logo icon to show up
 import traceback # To get exception information from subprocesses
 import FOPConstantsAndFunctions
 import streamlit as st
