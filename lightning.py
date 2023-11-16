@@ -95,7 +95,7 @@ class LightningFireOccurrencePrediction(object):
         
         # Fishnet NSR file path.
         self.ltg_fishnet_nsr_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\alberta_static.csv'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/alberta_static.csv'))
         
         # Alberta basemap shapefile path.
         self.ltg_alberta_shapefile = \
