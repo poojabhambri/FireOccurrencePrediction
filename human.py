@@ -27,6 +27,9 @@ from lightning import LightningFireOccurrencePrediction  # Re-use the rawWeather
 import random
 #from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 import numpy as np
+import sys
+import streamlit as st
+import csv
 
 # Numerical constants.
 NO_VALID_DATA_VALUE = -1.0
@@ -52,13 +55,13 @@ class HumanFireOccurrencePrediction(object):
         self.hmn_input_raw_weather_data_file = hmn_input_raw_weather_data_file
         
         # 2. Massaged weather data file (to be put in the intermediate data folder).
-        self.hmn_weather_massaged_output_path = hmn_intermediate_data_folder + '\\2_Massaged_Weather.csv'
+        self.hmn_weather_massaged_output_path = hmn_intermediate_data_folder + '/2_Massaged_Weather.csv'
     
         # 3. Weather interpolation coefficients data file path (to be put in the intermediate data folder).
-        self.hmn_weather_interpolation_coefficients_path = hmn_intermediate_data_folder + '\\3_weather_interpolation_coefficients'
+        self.hmn_weather_interpolation_coefficients_path = hmn_intermediate_data_folder + '/3_weather_interpolation_coefficients'
 
         # 4. Binned weather data file (to be put in the intermediate data folder).
-        self.hmn_weather_binned_output_path = hmn_intermediate_data_folder + '\\4_Binned_Weather.csv'
+        self.hmn_weather_binned_output_path = hmn_intermediate_data_folder + '/4_Binned_Weather.csv'
 
         # 5. Gridded Human FOP probabilities output file path (to be put in the output data folder).
         self.hmn_gridded_predictions_output_path = hmn_output_data_folder + '\\AB-Human_FOP_Grids.out'
@@ -70,113 +73,112 @@ class HumanFireOccurrencePrediction(object):
 
         # Calgary region.
         self.hmn_coefficients_path_calgary = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\calgary'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/calgary'))
        
-        self.hmn_coefficients_path_calgary_all_variables = self.hmn_coefficients_path_calgary + '\\GRID_Calgary_AllVariables.csv'
-        self.hmn_coefficients_path_calgary_all_terms = self.hmn_coefficients_path_calgary + '\\Calgary_AllTerms.xlsx'
+        self.hmn_coefficients_path_calgary_all_variables = self.hmn_coefficients_path_calgary + '/GRID_Calgary_AllVariables.csv'
+        self.hmn_coefficients_path_calgary_all_terms = self.hmn_coefficients_path_calgary + '/Calgary_AllTerms.xlsx'
 
         # Edson region.
         self.hmn_coefficients_path_edson = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\edson'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/edson'))
        
-        self.hmn_coefficients_path_edson_all_variables = self.hmn_coefficients_path_edson + '\\GRID_Edson_AllVariables.csv'
-        self.hmn_coefficients_path_edson_all_terms = self.hmn_coefficients_path_edson + '\\Edson_AllTerms.xlsx'
+        self.hmn_coefficients_path_edson_all_variables = self.hmn_coefficients_path_edson + '/GRID_Edson_AllVariables.csv'
+        self.hmn_coefficients_path_edson_all_terms = self.hmn_coefficients_path_edson + '/Edson_AllTerms.xlsx'
 
         # Fort McMurray region.
         self.hmn_coefficients_path_fort_mcmurray = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\fort_mcmurray'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/fort_mcmurray'))
        
-        self.hmn_coefficients_path_fort_mcmurray_all_variables = self.hmn_coefficients_path_fort_mcmurray + '\\GRID_FortMcMurray_AllVariables.csv'
-        self.hmn_coefficients_path_fort_mcmurray_all_terms = self.hmn_coefficients_path_fort_mcmurray + '\\FortMcMurray_AllTerms.xlsx'
+        self.hmn_coefficients_path_fort_mcmurray_all_variables = self.hmn_coefficients_path_fort_mcmurray + '/GRID_FortMcMurray_AllVariables.csv'
+        self.hmn_coefficients_path_fort_mcmurray_all_terms = self.hmn_coefficients_path_fort_mcmurray + '/FortMcMurray_AllTerms.xlsx'
 
         # Grande Prairie region.
         self.hmn_coefficients_path_grande_prairie = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\grande_prairie'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/grande_prairie'))
        
-        self.hmn_coefficients_path_grande_prairie_all_variables = self.hmn_coefficients_path_grande_prairie + '\\GRID_GrandePrairie_AllVariables.csv'
-        self.hmn_coefficients_path_grande_prairie_all_terms = self.hmn_coefficients_path_grande_prairie + '\\GrandePrairie_AllTerms.xlsx'
+        self.hmn_coefficients_path_grande_prairie_all_variables = self.hmn_coefficients_path_grande_prairie + '/GRID_GrandePrairie_AllVariables.csv'
+        self.hmn_coefficients_path_grande_prairie_all_terms = self.hmn_coefficients_path_grande_prairie + '/GrandePrairie_AllTerms.xlsx'
 
         # High Level region.
         self.hmn_coefficients_path_high_level = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\high_level'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/high_level'))
        
-        self.hmn_coefficients_path_high_level_all_variables = self.hmn_coefficients_path_high_level + '\\GRID_HighLevel_AllVariables.csv'
-        self.hmn_coefficients_path_high_level_all_terms = self.hmn_coefficients_path_high_level + '\\HighLevel_AllTerms.xlsx'
+        self.hmn_coefficients_path_high_level_all_variables = self.hmn_coefficients_path_high_level + '/GRID_HighLevel_AllVariables.csv'
+        self.hmn_coefficients_path_high_level_all_terms = self.hmn_coefficients_path_high_level + '/HighLevel_AllTerms.xlsx'
 
         # Lac la Biche region.
         self.hmn_coefficients_path_lac_la_biche = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\lac_la_biche'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/lac_la_biche'))
        
-        self.hmn_coefficients_path_lac_la_biche_all_variables = self.hmn_coefficients_path_lac_la_biche + '\\GRID_LacLaBiche_AllVariables.csv'
-        self.hmn_coefficients_path_lac_la_biche_all_terms = self.hmn_coefficients_path_lac_la_biche + '\\LacLaBiche_AllTerms.xlsx'
+        self.hmn_coefficients_path_lac_la_biche_all_variables = self.hmn_coefficients_path_lac_la_biche + '/GRID_LacLaBiche_AllVariables.csv'
+        self.hmn_coefficients_path_lac_la_biche_all_terms = self.hmn_coefficients_path_lac_la_biche + '/LacLaBiche_AllTerms.xlsx'
 
         # Peace River region.
         self.hmn_coefficients_path_peace_river = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\peace_river'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/peace_river'))
        
-        self.hmn_coefficients_path_peace_river_all_variables = self.hmn_coefficients_path_peace_river + '\\GRID_PeaceRiver_AllVariables.csv'
-        self.hmn_coefficients_path_peace_river_all_terms = self.hmn_coefficients_path_peace_river + '\\PeaceRiver_AllTerms.xlsx'
+        self.hmn_coefficients_path_peace_river_all_variables = self.hmn_coefficients_path_peace_river + '/GRID_PeaceRiver_AllVariables.csv'
+        self.hmn_coefficients_path_peace_river_all_terms = self.hmn_coefficients_path_peace_river + '/PeaceRiver_AllTerms.xlsx'
 
         # Rocky Mountain House region.
         self.hmn_coefficients_path_rocky_mountain_house = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\rocky_mountain_house'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/rocky_mountain_house'))
        
-        self.hmn_coefficients_path_rocky_mountain_house_all_variables = self.hmn_coefficients_path_rocky_mountain_house + '\\GRID_RockyMountainHouse_AllVariables.csv'
-        self.hmn_coefficients_path_rocky_mountain_house_all_terms = self.hmn_coefficients_path_rocky_mountain_house + '\\RockyMountainHouse_AllTerms.xlsx'
+        self.hmn_coefficients_path_rocky_mountain_house_all_variables = self.hmn_coefficients_path_rocky_mountain_house + '/GRID_RockyMountainHouse_AllVariables.csv'
+        self.hmn_coefficients_path_rocky_mountain_house_all_terms = self.hmn_coefficients_path_rocky_mountain_house + '/RockyMountainHouse_AllTerms.xlsx'
 
         # Slave Lake region.
         self.hmn_coefficients_path_slave_lake = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\slave_lake'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/slave_lake'))
        
-        self.hmn_coefficients_path_slave_lake_all_variables = self.hmn_coefficients_path_slave_lake + '\\GRID_SlaveLake_AllVariables.csv'
-        self.hmn_coefficients_path_slave_lake_all_terms = self.hmn_coefficients_path_slave_lake + '\\SlaveLake_AllTerms.xlsx'
+        self.hmn_coefficients_path_slave_lake_all_variables = self.hmn_coefficients_path_slave_lake + '/GRID_SlaveLake_AllVariables.csv'
+        self.hmn_coefficients_path_slave_lake_all_terms = self.hmn_coefficients_path_slave_lake + '/SlaveLake_AllTerms.xlsx'
 
         # Whitecourt region.
         self.hmn_coefficients_path_whitecourt = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\whitecourt'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/whitecourt'))
        
-        self.hmn_coefficients_path_whitecourt_all_variables = self.hmn_coefficients_path_whitecourt + '\\GRID_Whitecourt_AllVariables.csv'
-        self.hmn_coefficients_path_whitecourt_all_terms = self.hmn_coefficients_path_whitecourt + '\\Whitecourt_AllTerms.xlsx'
+        self.hmn_coefficients_path_whitecourt_all_variables = self.hmn_coefficients_path_whitecourt + '/GRID_Whitecourt_AllVariables.csv'
+        self.hmn_coefficients_path_whitecourt_all_terms = self.hmn_coefficients_path_whitecourt + '/Whitecourt_AllTerms.xlsx'
 
         # Slopes region.
         self.hmn_coefficients_path_slopes = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\human\\slopes'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/human/slopes'))
        
-        self.hmn_coefficients_path_slopes_all_variables = self.hmn_coefficients_path_slopes + '\\GRID_Slopes_AllVariables.csv'
-        self.hmn_coefficients_path_slopes_all_terms = self.hmn_coefficients_path_slopes + '\\Slopes_AllTerms.xlsx'
+        self.hmn_coefficients_path_slopes_all_variables = self.hmn_coefficients_path_slopes + '/GRID_Slopes_AllVariables.csv'
+        self.hmn_coefficients_path_slopes_all_terms = self.hmn_coefficients_path_slopes + '/Slopes_AllTerms.xlsx'
     
         # Construct paths to other important files and folders needed by the Human FOP model:
 
         # Human FOP cumulative expected values and probabilities data file path.
         self.hmn_cumulative_probs_expvals_output_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\hmn_fop_probabilities_output.out'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/hmn_fop_probabilities_output.out'))
         
         # Weather station locations file path.
-        self.hmn_weather_station_locations_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\Alberta_Weather_Stations_2019_new.csv'))
+        self.hmn_weather_station_locations_path = 'resource_files/Alberta_Weather_Stations_2019_new.csv'
         
         # Grid locations file path.
         self.hmn_grid_locations_path = "resource_files/Gridlocations.prn"
         
         # Fishnet NSR file path.
         self.hmn_fishnet_nsr_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\alberta_static.csv'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/alberta_static.csv'))
 
         # Alberta basemap shapefile path.
         self.hmn_alberta_basemap_shapefile = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\shapefiles\\asrd_mgmt_area\\BF_ASRD_MGMT_AREA_POLYGON.shp'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/shapefiles/asrd_mgmt_area/BF_ASRD_MGMT_AREA_POLYGON.shp'))
         
         # Alberta fishnet shapefile path.
         self.hmn_alberta_fishnet_shapefile = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\shapefiles\\fishnet\\fishnet.shp'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/shapefiles/fishnet/fishnet.shp'))
         
         # Alberta polygon shapefile path.
         self.hmn_alberta_poly_shapefile = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\shapefiles\\fishnet\\AB_Poly.shp'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/shapefiles/fishnet/AB_Poly.shp'))
 
         # Alberta forest area shapefile path.
         self.hmn_alberta_forest_area_shapefile = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\shapefiles\\fishnet\\Forest_Area.shp'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/shapefiles/fishnet/Forest_Area.shp'))
         
         # FOP system state DB / CSV file path.
         self.fop_system_state_db_path = 'resource_files\\fop_system_state_db.csv'
@@ -188,34 +190,47 @@ class HumanFireOccurrencePrediction(object):
         self.hmn_actual_fire_arrivals_file = hmn_actual_fire_arrivals_file
 
         # Dr. Wotton's C program executable paths.
-
-        # Build the path to the C weather interpolation executable.
-        self.weather_interpolation_exe_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\lightning\\weather\\cf-build-AB.exe'))
-        
         # Build the path to the C weather binning executable.
-        self.weather_binning_exe_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\lightning\\weather\\use_cf2.exe'))
     
     def weatherInterpolationBinnerWrapper(self):
         """ Calls the wrapped weather interpolation and binning tools, feeding it the massaged weather data.
             Here, we use subprocess.call as opposed to subprocess.Popen because subprocess.call
             is blocking; we need the external call to finish before we carry on with other stages of
             the processing flow. """
+        st.write("In weatherInterpolationBinnerWrapper()")
+        st.write("Doing build")
+        subprocess.run([f"{sys.executable}", "lightning/weather/cf-build-AB.py"])
+        st.write("Done build and doing use")
+        subprocess.run([f"{sys.executable}", "lightning/weather/use_cf2.py"])
+        # result2 = subprocess.run([sys.executable, "lightning/weather/use_cf2.py"] capture_output=True, text=True)
+        # if result2.returncode != 0:
+        #     st.write("Error in the second subprocess call:")
+        #     print(result2.stdout)
+        #     print(result2.stderr)
+        file_path2 = "intermediate_output/3_weather_interpolation_coefficients/CF-dc.ab"
+        file_path3 = "intermediate_output/3_weather_interpolation_coefficients/CF-dmc.ab"
+        file_path4 = "intermediate_output/3_weather_interpolation_coefficients/CF-fwi.ab"
+        file_path1 = "intermediate_output/3_weather_interpolation_coefficients/CF-bui.ab"
+        #with open(file_path1, 'r') as file:
+            #for line in file:
+                #print(line)
+        #print("THIS IS CF-dc")
+        #with open(file_path2, 'r') as file:
+            #for line in file:
+                #print(line)
+        #print("THIS IS CF-dmc")
+        #with open(file_path3, 'r') as file:
+            #for line in file:
+                #print(line)
+        #print("THIS IS CF-fwi.ab")
+        #with open(file_path4, 'r') as file:
+            #for line in file:
+                #print(line)
+
         
-        # print("weatherInterpolationBinnerWrapper(): Calling weather interpolation exe...")
-        # print("weatherInterpolationBinnerWrapper(): self.hmn_weather_interpolation_coefficients_path is %s" % self.hmn_weather_interpolation_coefficients_path)
-
-        subprocess.call([self.weather_interpolation_exe_path, self.hmn_weather_massaged_output_path, self.hmn_weather_interpolation_coefficients_path])
-        # print("weatherInterpolationBinnerWrapper(): Weather interpolation exe call completed.")
-
-        # print("weatherInterpolationBinnerWrapper(): Calling weather binner exe...")
-        subprocess.call([self.weather_binning_exe_path, self.hmn_weather_binned_output_path, self.hmn_grid_locations_path, self.hmn_weather_interpolation_coefficients_path])
-        # print("weatherInterpolationBinnerWrapper(): Weather binning exe call completed.")
     
     def humanFOPProbabilitiesCalculator(self, date_to_predict_for):
         """ This method computes Human FOP expected values and probabilities per Alberta fishnet cell. """
-
         # Open the Human FOP cumulative probabilities and expected values file.
         hmn_cumulative_probs_expvals_df = pd.read_csv(self.hmn_cumulative_probs_expvals_output_path, sep=',', parse_dates=['date'])
         hmn_cumulative_probs_expvals_df.columns = FOPConstantsAndFunctions.HMN_PROBABILITIES_EXPECTED_VALUES_HEADERS
@@ -223,7 +238,6 @@ class HumanFireOccurrencePrediction(object):
         # Read in the interpolated and binned weather file.
         interpolated_binned_weather_df = pd.read_csv(self.hmn_weather_binned_output_path, sep=',', header=None)
         interpolated_binned_weather_df.columns = FOPConstantsAndFunctions.INTERPOLATED_BINNED_WEATHER_DATA_HEADERS
-        interpolated_binned_weather_df.at[0, 'grid'] = interpolated_binned_weather_df.at[1, 'grid'] - 1
         # Read in the Fishnet NSR file.
         hmn_fishnet_nsr_path_df =  pd.read_csv(self.hmn_fishnet_nsr_path, sep=',')
 
@@ -238,7 +252,6 @@ class HumanFireOccurrencePrediction(object):
 
         def do_calculate_probabilities(terms_df, variables_df):        
             # Loop through all of the rows in the variables file and calculate the probabilities and expected values on a per-fishnet ID basis.
-
             # Load up the Slopes region terms and variables file if we are to use the new version of the Slopes model.
             if USE_SLOPES_MODEL_V2:
                 # print("humanFOPProbabilitiesCalculator(): Using Slopes v2 model coefficients . . .")
@@ -247,7 +260,6 @@ class HumanFireOccurrencePrediction(object):
 
             i = 0
             for _ , row_variable in variables_df.iterrows():
-
                 i = i + 1
                 # if i % 250 == 0:
                     # print("humanFOPProbabilitiesCalculator(): Calculating row #%d. . ." % i)
@@ -259,9 +271,7 @@ class HumanFireOccurrencePrediction(object):
                 intercept_term = terms_df['INTERCEPT'].index.values[0]
                 day_of_year_term = terms_df['DAY_OF_YEAR'].at[day_of_year_julian, 's(DAY_OF_YEAR)']
                 spatial_term = terms_df['SPATIAL'].at[row_variable['FISHNET_AB'], 'te(X,Y)']
-
                 # Handle -999.9 value for the interpolated FFMC.
-
                 try:
                     ffmc_term = terms_df['FFMC'].at[round(interpolated_binned_weather_df.loc[((interpolated_binned_weather_df['grid'] == row_variable['FISHNET_AB']) &
                                                                                               (interpolated_binned_weather_df['year'] == date_to_predict_for.year) &
@@ -271,7 +281,6 @@ class HumanFireOccurrencePrediction(object):
                     # If we except a KeyError, then we were unable to perform a lookup in Dr. Woolford's model for this FFMC value.
                     # Assign the probability and FFMC for this particular cell to be "-1.0".
                     # It will be plotted on our map as a special "No data" datapoint.
-                    ffmc_term = -1.0
                     row_df = pd.DataFrame([[row_variable['FISHNET_AB'],
                                             date_to_predict_for,
                                             day_of_year_julian,
@@ -296,7 +305,6 @@ class HumanFireOccurrencePrediction(object):
                 wui_term = terms_df['WUI'].at[round(row_variable['WUI'], 2), 's(WUI)']
                 wii_term = terms_df['WII'].at[round(row_variable['WII'], 2), 's(WII)']
                 inf_term = terms_df['INF'].at[round(row_variable['INF'], 2), 's(INF)']
-
                 logit = (intercept_term +
                          day_of_year_term +
                          spatial_term +
@@ -367,7 +375,6 @@ class HumanFireOccurrencePrediction(object):
                     probability = 0
                 else:
                     probability = math.exp(logit) / (1 + math.exp(logit))
-
                 # Append a new row to the Human FOP expected value and probabilities output file.
                 # Column headers:
                 # 'fishnet_id', 'date', 'day_of_year', 'latitude', 'longitude', 'region', 'ffmc_interpolated', 'logit', 'probability'
@@ -389,7 +396,6 @@ class HumanFireOccurrencePrediction(object):
                 
                 row_df.columns = FOPConstantsAndFunctions.HMN_PROBABILITIES_EXPECTED_VALUES_HEADERS
                 self.hmn_fop_probabilities_expected_values_df = self.hmn_fop_probabilities_expected_values_df.append(row_df)
-        
         # Calgary forest region.
         # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Calgary forest region. . .")
         calgary_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_calgary_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
@@ -499,7 +505,6 @@ class HumanFireOccurrencePrediction(object):
 
         # print("humanSimulationConfidenceIntervalGenerator(): ci_low - 1 (array index) is %d" % int(ci_low - 1))
         # print("humanSimulationConfidenceIntervalGenerator(): ci_high - 1 (array index) is %d" % int(ci_high - 1))
-
         # Start the simulation.
         for current_day in days_to_simulate:
 
@@ -593,7 +598,6 @@ class HumanFireOccurrencePrediction(object):
             total_fires_east_boreal.sort()
             total_fires_west_boreal.sort()
             total_fires_alberta.sort()
-
             # Determine the confidence interval percentiles of these lists based on what the user specified.
             # Slopes.
             totarrSLOPES_ci_low = total_fires_slopes[ci_low - 1]
@@ -641,7 +645,6 @@ class HumanFireOccurrencePrediction(object):
         """ This method runs a simulation to produce confidence intervals for the three Alberta regions
             (East Boreal, West Boreal, and Slopes), as well as for the whole Province of Alberta.
         """
-
         # Load in the Human FOP cumulative probabilities and expected values file.
         hmn_cumulative_probs_expvals_df = pd.read_csv(self.hmn_cumulative_probs_expvals_output_path, sep=',', parse_dates=['date'])
 
@@ -656,7 +659,6 @@ class HumanFireOccurrencePrediction(object):
         # print("humanSimulationConfidenceIntervalGenerator(): ci_high - 1 (array index) is %d" % int(ci_high - 1))
 
         # print("humanSimulationConfidenceIntervalGenerator(): Performing %d replications per day to simulate for." % NUM_SIMULATION_REPLICATIONS)
-
         # Start the simulation.
         for current_day in days_to_simulate:
 
@@ -999,7 +1001,6 @@ class HumanFireOccurrencePrediction(object):
         # print("humanConfidenceIntervalGraphGenerator(): Dropping all duplicate fires / identical rows...")
         actual_fires_df.drop_duplicates(keep='first', inplace=True)
         actual_fires_df.columns = map(str.upper, actual_fires_df.columns)
-
         # We want to select all fires (including "Unknown" fires) which are not Lightning fires.
         actual_fires_df = actual_fires_df[(actual_fires_df['GENERAL_CAUSE_DESC'].str.contains("Lightning") == False)]
         
@@ -1227,7 +1228,6 @@ class HumanFireOccurrencePrediction(object):
             
             # Next, we need to select only the raw weather data for the day that we need to produce a human-caused
             # prediction for.
-
             raw_weather_data_df = pd.read_csv(self.hmn_input_raw_weather_data_file, sep=',')
 
              # Perform a header check to determine the well-formed nature of the CSV.
@@ -1281,7 +1281,7 @@ class HumanFireOccurrencePrediction(object):
             FOPConstantsAndFunctions.rawWeatherDataMassager(raw_weather_data_df,
                                                             self.hmn_weather_massaged_output_path,
                                                             self.hmn_weather_station_locations_path)
-
+            
             # 2. Call the weather interpolation and binning executable through the following method.
             self.weatherInterpolationBinnerWrapper()
 
