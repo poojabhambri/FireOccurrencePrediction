@@ -28,7 +28,8 @@ import matplotlib.dates as mdates
 import pylab
 import FOPConstantsAndFunctions
 import pandas.io.common
-
+import sys
+import streamlit as st
 ######################################### CLASSES #########################################
 
 class LightningFireOccurrencePrediction(object):
@@ -37,7 +38,7 @@ class LightningFireOccurrencePrediction(object):
     def __init__(self,
                  ltg_input_raw_weather_data_file,
                  ltg_input_raw_lightning_strike_data_file,
-                 ltg_intermediate_data_folder,
+                 intermediate_output,
                  ltg_output_data_folder,
                  ltg_output_maps_folder,
                  ltg_actual_fire_arrivals_file  
@@ -49,28 +50,28 @@ class LightningFireOccurrencePrediction(object):
         self.ltg_input_raw_weather_data_file = ltg_input_raw_weather_data_file
 
         # 2. Massaged weather data file (to be put in the intermediate data folder).
-        self.ltg_weather_massaged_output_path = ltg_intermediate_data_folder + '/2_Massaged_Weather.csv'
+        self.ltg_weather_massaged_output_path = intermediate_output + '/2_Massaged_Weather.csv'
 
         # 3. Weather interpolation coefficients data file path (to be put in the intermediate data folder)
-        self.ltg_weather_interpolation_coefficients_path = ltg_intermediate_data_folder + '/3_weather_interpolation_coefficients'
+        self.ltg_weather_interpolation_coefficients_path = intermediate_output + '/3_weather_interpolation_coefficients'
 
         # 4. Binned weather data file (to be put in the intermediate data folder).
-        self.ltg_weather_binned_output_path = ltg_intermediate_data_folder + '/4_Binned_Weather.csv'
+        self.ltg_weather_binned_output_path = intermediate_output + '/4_Binned_Weather.csv'
 
         # (4). Binned weather data file with lat-longs added (to be put in the intermediate data folder).
-        self.ltg_weather_binned_output_lat_longs_added_path = ltg_intermediate_data_folder + '/4_Binned_Weather_LatLongs_Added.csv'
+        self.ltg_weather_binned_output_lat_longs_added_path = intermediate_output + '/4_Binned_Weather_LatLongs_Added.csv'
 
         # 5. Raw lightning strike data file (path is already constructed, explicit from the GUI).
         self.ltg_input_raw_lightning_strike_data_file = ltg_input_raw_lightning_strike_data_file
 
         # 6. Massaged lightning strike file path (to be put in the intermediate data folder).
-        self.ltg_strike_raw_massaged_output_path = ltg_intermediate_data_folder + '/6_AB_ltg_space_massaged.out'
+        self.ltg_strike_raw_massaged_output_path = intermediate_output + '/6_AB_ltg_space_massaged.out'
 
         # 7. Binned lightning strike file path (to be put in the intermediate data folder).
-        self.ltg_lightning_binned_output_path = ltg_intermediate_data_folder + '/7_ltg-10by10-five-period.dat'
+        self.ltg_lightning_binned_output_path = intermediate_output + '/7_ltg-10by10-five-period.dat'
 
         # 8. Merged binned weather and lightning file path (to be put in the intermediate data folder).
-        self.ltg_merged_weather_lightning_data_path = ltg_intermediate_data_folder + '/8_Alberta_Merged_Weather_Lightning.csv'
+        self.ltg_merged_weather_lightning_data_path = intermediate_output + '/8_Alberta_Merged_Weather_Lightning.csv'
 
         # 9. Confidence intervals output file path (to be put in the output data folder)
         self.ltg_confidence_intervals_output_path = ltg_output_data_folder + '/AB-predictions.out'
@@ -79,7 +80,7 @@ class LightningFireOccurrencePrediction(object):
         self.ltg_gridded_predictions_output_path = ltg_output_data_folder + '/AB-grids.out'
 
         # DEBUG: Root of the intermediate output folder.
-        self.ltg_debugging_weather_station_grid_locations_path = ltg_intermediate_data_folder + "\\Gridlocations-WEATHERSTATIONSDEBUG.prn"
+        self.ltg_debugging_weather_station_grid_locations_path = intermediate_output + "\\Gridlocations-WEATHERSTATIONSDEBUG.prn"
 
         # Construct paths to the resource files and paths required by the Lightning FOP model:
 
@@ -87,15 +88,14 @@ class LightningFireOccurrencePrediction(object):
         self.ltg_arrivals_holdovers_probabilities_output_path = \
             os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\ltg_fop_probabilities_output.out'))
         # Grid locations file path.
-        self.ltg_grid_locations_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\Gridlocations.prn'))
+        self.ltg_grid_locations_path  ="resource_files/Gridlocations.prn"
         
         # Weather station locations file path.
-        self.hmn_weather_station_locations_path = 'resource_files\\Alberta_Weather_Stations_2019_new.csv'
+        self.ltg_weather_station_locations_path = 'resource_files/Alberta_Weather_Stations_2019_new.csv'
         
         # Fishnet NSR file path.
         self.ltg_fishnet_nsr_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/alberta_static.csv'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)),'fireoccurrenceprediction/resource_files/alberta_static.csv'))
         
         # Alberta basemap shapefile path.
         self.ltg_alberta_shapefile = \
@@ -103,15 +103,15 @@ class LightningFireOccurrencePrediction(object):
         
         # Alberta fishnet shapefile path.
         self.ltg_alberta_fishnet_shapefile = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\shapefiles\\fishnet\\fishnet.shp'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/shapefiles/fishnet/fishnet.shp'))
         
         # Alberta polygon shapefile path.
         self.ltg_alberta_poly_shapefile = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\shapefiles\\fishnet\\AB_Poly.shp'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/shapefiles/fishnet/AB_Poly.shp'))
 
         # Alberta forest area shapefile path.
         self.ltg_alberta_forest_area_shapefile = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\resource_files\\shapefiles\\fishnet\\Forest_Area.shp'))
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fireoccurrenceprediction/resource_files/shapefiles/fishnet/Forest_Area.shp'))
         
         # FOP system state DB / CSV file path.
         self.fop_system_state_db_path = 'resource_files\\fop_system_state_db.csv'
@@ -123,22 +123,18 @@ class LightningFireOccurrencePrediction(object):
         self.ltg_actual_fire_arrivals_file = ltg_actual_fire_arrivals_file
 
         # Dr. Wotton's C program executable paths.
-
         # Build the path to the C binning executable.
-        self.lightning_wrapper_exe_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\lightning\\binning\\build-ltggrids-five-period.exe'))
+        self.lightning_wrapper_exe_path =  'lightning/binning/build-ltggrids-five-period.py'
         
         # Build the path to the C weather interpolation executable.
-        self.weather_interpolation_exe_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\lightning\\weather\\cf-build-AB.exe'))
+        self.weather_interpolation_exe_path =  '/mount/src/fireoccurrenceprediction/lightning/weather/cf-build-AB.py'
         
         # Build the path to the C weather binning executable.
-        self.weather_binning_exe_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\lightning\\weather\\use_cf2.exe'))
+        self.weather_binning_exe_path = '/mount/src/fireoccurrenceprediction/lightning/weather/use_cf2.py'
 
         # Build the path to the C simulation executable.
-        self.simulation_exe_path = \
-            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\lightning\\simulation\\simulate-new-allyears-DC.exe'))
+        #self.simulation_exe_path = \
+            #os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'FireOccurrencePrediction\\lightning\\simulation\\simulate-new-allyears-DC.exe'))
     
     def lightningFirePredictionMapper(self, map_type, days_to_map, display_historical_fires_on_maps, ltg_fire_holdover_lookback_time, ltg_fire_confidence_interval):
         """ This method produces a map of lightning fire predictions overlayed on an Alberta
@@ -598,7 +594,6 @@ class LightningFireOccurrencePrediction(object):
             Output format (no header, sorted chronologically - VERY IMPORTANT):
             LATITUDE, LONGITUDE, STRENGTH, MULTIPLICITY, YEAR, MONTH, DAY, HOUR
         """
-        
         # Apply column-wide operations.
         input_df['LATITUDE'] = input_df['LATITUDE'].apply(lambda x : round(float(x), 4))
         input_df['LONGITUDE'] = input_df['LONGITUDE'].apply(lambda x : round(float(x), 4))
@@ -611,18 +606,21 @@ class LightningFireOccurrencePrediction(object):
         input_df['HOUR'] = input_df['LOCAL_STRIKETIME'].apply(lambda x : x.hour)
 
         input_df['MULTIPLICITY'] = input_df['MULTIPLICITY'].astype('int32')
+        input_df['YEAR'] = pd.to_datetime(input_df['YEAR'], errors='coerce')
         input_df['YEAR'] = input_df['YEAR'].dt.year.astype('int32')
+        input_df['MONTH'] = pd.to_datetime(input_df['MONTH'], errors='coerce')
         input_df['MONTH'] = input_df['MONTH'].dt.month.astype('int32')
+        input_df['DAY'] = pd.to_datetime(input_df['DAY'], errors='coerce')
         input_df['DAY'] = input_df['DAY'].dt.day.astype('int32')
+        input_df['HOUR'] = pd.to_datetime(input_df['HOUR'], errors='coerce')
         input_df['HOUR'] = input_df['HOUR'].dt.hour.astype('int32')
         
         input_df = input_df.drop('LOCAL_STRIKETIME', axis=1)
 
-
         # Write the massaged output to disk. This file will be used as input to Dr. Wotton's lightning binning library.
         # No column headers, no index column, tab-separated.
         # output_csv_df.to_csv(self.ltg_strike_raw_massaged_output_path, sep=' ', header=False, index=False)
-        input_df.to_csv(self.ltg_strike_raw_massaged_output_path, sep=' ', header=False, index=False)
+        input_df.to_csv('intermediate_output/6_AB_ltg_space_massaged.out', sep=' ', header=False, index=False)
 
     
     def lightningBinnerWrapper(self):
@@ -633,8 +631,11 @@ class LightningFireOccurrencePrediction(object):
             the processing flow. """
         
         # Sample command line arguments call: "Y:\\University of Alberta\\Software Development\\FireOccurrencePrediction\\lightning\\binning\\Gridlocations.prn", "Z:\\LightningFireOccurrencePredictionInputs\\ABltg_space_MATT.out", "Z:\\LightningFireOccurrencePredictionInputs\\ltg2010-20by20-five-period.dat")
-        subprocess.call([self.lightning_wrapper_exe_path, self.ltg_grid_locations_path, self.ltg_strike_raw_massaged_output_path, self.ltg_lightning_binned_output_path])
-    
+        #st.write("ENTERING lightning/binning/build-ltggrids-five-period.py")
+        subprocess.run([f"{sys.executable}", 'lightning/binning/build-ltggrids-five-period.py'])
+        #st.write("EXITING lightning/binning/build-ltggrids-five-period.py")
+        #subprocess.run([f"{sys.executable}",self.lightning_wrapper_exe_path, self.ltg_grid_locations_path,self.ltg_strike_raw_massaged_output_path,self.ltg_lightning_binned_output_path])
+        
     def weatherInterpolationBinnerWrapper(self):
         """ Calls the wrapped weather interpolation and binning tools, feeding it the massaged weather data.
             Here, we use subprocess.call as opposed to subprocess.Popen because subprocess.call
@@ -642,11 +643,13 @@ class LightningFireOccurrencePrediction(object):
             the processing flow. """
         
         # raw_input("Press Enter to continue . . .")
-
-        subprocess.call([self.weather_interpolation_exe_path, self.ltg_weather_massaged_output_path, self.ltg_weather_interpolation_coefficients_path])
-
-        subprocess.call([self.weather_binning_exe_path, self.ltg_weather_binned_output_path, self.ltg_grid_locations_path, self.ltg_weather_interpolation_coefficients_path])
-    
+        #st.write("Entering build.py")
+        subprocess.run([f"{sys.executable}", "lightning/weather/cf-build-AB.py"])
+        #st.write("Exiting build.py and entering use.py")
+        subprocess.run([f"{sys.executable}", "lightning/weather/use_cf2.py"])
+        #st.write("Exiting use.py")
+        #subprocess.call([f"{sys.executable}",self.weather_interpolation_exe_path, self.ltg_weather_massaged_output_path, self.ltg_weather_interpolation_coefficients_path])
+        #subprocess.call([f"{sys.executable}",self.weather_binning_exe_path, self.ltg_weather_binned_output_path, self.ltg_grid_locations_path, self.ltg_weather_interpolation_coefficients_path])
     def simulationWrapper(self, start_day, end_day, ltg_fire_holdover_lookback_time, ltg_fire_confidence_interval):
         """ Calls the wrapped simulation tool, feeding it the massaged probability data.
             The simulation tool will produce two output files: one will contain the expected number
@@ -659,17 +662,34 @@ class LightningFireOccurrencePrediction(object):
         
         # Seed the random number generator using the current system time.
         random.seed(datetime.datetime.now())
-        
-        # Sample command line arguments call: simulate-new-allyears.exe 12345 "Z:\\LightningFireOccurrencePredictionInputs\\ltg_output.csv" "Z:\\LightningFireOccurrencePredictionInputs\\AB-predictions.out" "Z:\\LightningFireOccurrencePredictionInputs\\AB-grids.out" 121 125
-        subprocess.call([self.simulation_exe_path,
-                         str(random.randint(1, FOPConstantsAndFunctions.MAX_INT)),
+        arguments = [
+        str(random.randint(1, FOPConstantsAndFunctions.MAX_INT)),
                          self.ltg_arrivals_holdovers_probabilities_output_path,
                          self.ltg_confidence_intervals_output_path,
                          self.ltg_gridded_predictions_output_path,
                          str(start_day),
                          str(end_day),
                          str(ltg_fire_holdover_lookback_time),
-                         str(ltg_fire_confidence_interval)])
+                         str(ltg_fire_confidence_interval)
+        ]
+
+        with open('intermediate_output\\arguments.csv', 'w', newline='') as csv_file:
+            csv_writer = csv.writer(csv_file)
+            csv_writer.writerow(arguments)
+        
+        # Sample command line arguments call: simulate-new-allyears.exe 12345 "Z:\\LightningFireOccurrencePredictionInputs\\ltg_output.csv" "Z:\\LightningFireOccurrencePredictionInputs\\AB-predictions.out" "Z:\\LightningFireOccurrencePredictionInputs\\AB-grids.out" 121 125
+        #st.write("Going into simulate")
+        subprocess.run([f"{sys.executable}", 'lightning/simulation/simulate-new-allyears-DC.py'])
+        #st.write("Done simulate")
+        #subprocess.call([self.simulation_exe_path,
+                         #str(random.randint(1, FOPConstantsAndFunctions.MAX_INT)),
+                         #self.ltg_arrivals_holdovers_probabilities_output_path,
+                         #self.ltg_confidence_intervals_output_path,
+                         #self.ltg_gridded_predictions_output_path,
+                         #str(start_day),
+                         #str(end_day),
+                         #str(ltg_fire_holdover_lookback_time),
+                         #str(ltg_fire_confidence_interval)])
     
     def createGridLocationsFromWeatherStationLocationsAndTest(self):
         """ This debugging method will take in the weather station locations file and produce another file
@@ -708,7 +728,7 @@ class LightningFireOccurrencePrediction(object):
             input_binned_lightning_df = pd.read_csv(self.ltg_lightning_binned_output_path, header=None, delim_whitespace=True, error_bad_lines=False)
             input_binned_lightning_df.columns = ['grid', 'latitude', 'longitude', 'year', 'month', 'day',
                                                  'period', 'neg', 'pos']
-        except pandas.io.common.EmptyDataError as e:
+        except pandas.errors.EmptyDataError as e:
             print("mergeBinnedWeatherAndLightning(): pandas.io.common.EmptyDataError exception thrown, but not critical!")
             print(e)
             print("mergeBinnedWeatherAndLightning(): Setting the binned lightning dataframe to be empty . . .")
@@ -955,18 +975,8 @@ class LightningFireOccurrencePrediction(object):
 
             if float(working_dict['dc']) < 0:
                 working_dict['dc'] = ''
-            if working_dict['ZONE_CODE'].endswith('.0'):
-                # Remove the decimal part from the string
-              working_dict['ZONE_CODE'] = (working_dict['ZONE_CODE'])[:-2]
-            if working_dict['NSR'].endswith('.0'):
-                # Remove the decimal part from the string
-              working_dict['NSR'] = (working_dict['NSR'])[:-2]
-
-            if working_dict['totltg'].endswith('.0'):
-                # Remove the decimal part from the string
-              working_dict['totltg'] = (working_dict['totltg'])[:-2]
-
-            if int((working_dict['ZONE_CODE'])) == 10:
+            
+            if int(working_dict['ZONE_CODE']) == 10:
                 working_dict['ZONE_CODE'] = 9
             
             # Mike: IMPORTANT: RECASTING some small NSRs that had few ltg fires into
@@ -1094,22 +1104,14 @@ class LightningFireOccurrencePrediction(object):
             # working_dict['probarr0'] = round(prob_arr0, 10)  # 10 decimal places to match Mike
             # self.prob_arr0.append(prob_arr0)
 
-            if pr0 > 0:
-                prob_arr0 = 1.0 / (1.0 + math.exp(-pr0 ))
-            else:
-                prob_arr0 = math.exp(pr0) / (1.0 + math.exp(pr0 ))
+            prob_arr0 = math.exp(pr0) / (1 + math.exp(pr0))
             working_dict['probarr0'] = ('{0:.10f}'.format(prob_arr0)).rstrip('0')  # 10 decimal places            
 
             # Prob. that a fire arrives any day after ignition.
             # prob_arr1 = Decimal(math.exp(pr1) / (1 + math.exp(pr1)))
             # working_dict['probarr1'] = round(prob_arr1, 10)  # 10 decimal places to match Mike
 
-
-            prob_arr1 = 0.0  # Default value
-            if pr1 < 700:  # Adjust the threshold as needed
-                prob_arr1 = math.exp(pr1) / (1 + math.exp(pr1))
-            else:
-                prob_arr1 = 1.0
+            prob_arr1 = math.exp(pr1) / (1 + math.exp(pr1))
             working_dict['probarr1'] = ('{0:.10f}'.format(prob_arr1)).rstrip('0')  # 10 decimal places
 
             #self.prob_arr1.append(prob_arr1)
@@ -1256,10 +1258,7 @@ class LightningFireOccurrencePrediction(object):
                 float(working_dict['dc']) * (0.0020) + \
                 float(working_dict['ffmc']) * (0.0709 + ffmc_nsr) - (0.0097 * perpos)
 
-            if f > 0:
-                probign = 1.0 / (1.0 + math.exp(-f))
-            else:
-                probign = math.exp(f) / (1.0 + math.exp(f))
+            probign = math.exp(f) / (1.0 + math.exp(f))
             
             if probign > 0.04:
                 probign = 0.04 + ((probign - 0.04) * 0.25)
@@ -1645,11 +1644,11 @@ class LightningFireOccurrencePrediction(object):
             raw_weather_data_df = raw_weather_data_df.sort_values(by='weather_date')
 
             #day_after_most_recent_day = most_recent_date + datetime.timedelta(days=1)    ###   + datetime.timedelta(days=1)
-            date_mask_weather = ((raw_weather_data_df['weather_date'] > pd.Timestamp(most_recent_date)) & (raw_weather_data_df['weather_date'] <= pd.Timestamp(date_to_predict_for + datetime.timedelta(days=1))))
+            #date_mask_weather = ((raw_weather_data_df['weather_date'] > pd.Timestamp(most_recent_date)) & (raw_weather_data_df['weather_date'] <= pd.Timestamp(date_to_predict_for + datetime.timedelta(days=1))))
 
             # Perform the date selection for this dataframe; selection is inclusive.
             # raw_weather_data_df = raw_weather_data_df.loc[raw_weather_data_df['weather_date'][str(day_after_most_recent_day):str(date_to_predict_for)]]
-            raw_weather_data_df = raw_weather_data_df.loc[date_mask_weather]
+            #raw_weather_data_df = raw_weather_data_df.loc[date_mask_weather]
 
 
             # Ensure that we actually have date_to_predict_for in the range that we grabbed.
@@ -1657,11 +1656,31 @@ class LightningFireOccurrencePrediction(object):
                 print("lightningFOPController(): The provided date, %s, does not exist in the raw weather dataset. \r\n" \
                     "Please provide a more up-to-date raw weather data file or adjust the prediction date and try again." % str(date_to_predict_for))
                 return"""            
+
+
+            date_mask_weather = ((raw_weather_data_df['weather_date'].dt.year == date_to_predict_for.year) &
+                                             (raw_weather_data_df['weather_date'].dt.month == date_to_predict_for.month) &
+                                             (raw_weather_data_df['weather_date'].dt.day == date_to_predict_for.day))
+
+            # Perform the date selection for this dataframe; selection is inclusive.
+            raw_weather_data_df = raw_weather_data_df.loc[date_mask_weather]
+
+
+
+            # Ensure that we actually have grabbed data for the date we want to predict for.
+            if raw_weather_data_df.empty:
+                            # print("humanFOPController(): The provided date, %s, does not exist in the raw weather dataset. \r\n" \
+                                # "Please provide a more up-to-date raw weather data file or adjust the prediction date and try again." % str(date_to_predict_for))
+                raise Exception
+                return
+
+
             if not ((raw_weather_data_df['weather_date'].max().year == date_to_predict_for.year) and
-                    (raw_weather_data_df['weather_date'].max().month == date_to_predict_for.month) and
-                    (raw_weather_data_df['weather_date'].max().day == date_to_predict_for.day)):
+                        (raw_weather_data_df['weather_date'].max().month == date_to_predict_for.month) and
+                        (raw_weather_data_df['weather_date'].max().day == date_to_predict_for.day)):
                 print("lightningFOPController(): The provided prediction date, %s, does not exist in the raw weather dataset. \r\n" \
-                    "Please provide a more up-to-date raw weather data file or adjust the prediction date and try again." % str(date_to_predict_for))
+                    "Please provide a more up-to-date raw weather data file or adjust the prediction date and try again. Test" % str(date_to_predict_for))
+                    #raise Exception 
                 
             
             # We are good to go on the raw weather data side. Let's attempt the same thing for the raw lightning strike data.
@@ -1682,18 +1701,15 @@ class LightningFireOccurrencePrediction(object):
                 return
             
             # raw_input("Press any key to continue...")
-
             # Make all of the lightning strike column headers to be uppercase.
             raw_lightning_strike_data_df.columns = map(str.upper, raw_lightning_strike_data_df.columns)
 
             # Sort the input dataframe by the second column: "local_striketime".
             raw_lightning_strike_data_df = raw_lightning_strike_data_df.sort_values(by='LOCAL_STRIKETIME')
             date_mask_lightning = ((raw_lightning_strike_data_df['LOCAL_STRIKETIME'] > pd.Timestamp(most_recent_date)) & (raw_lightning_strike_data_df['LOCAL_STRIKETIME'] <= pd.Timestamp(date_to_predict_for + datetime.timedelta(days=1))))
-
             # Perform the date selection for this dataframe; selection is inclusive.
             # raw_weather_data_df = raw_weather_data_df.loc[raw_weather_data_df['weather_date'][str(day_after_most_recent_day):str(date_to_predict_for)]]
             raw_lightning_strike_data_df = raw_lightning_strike_data_df.loc[date_mask_lightning]
-
             # Ensure that we actually have date_to_predict_for in the range that we grabbed for the raw lightning strike data.
             # 
             # raw_input("Press Enter to continue...")
@@ -1709,7 +1725,7 @@ class LightningFireOccurrencePrediction(object):
             # 3. Call the raw weather data massager method on the prepared raw weather dataframe.
             FOPConstantsAndFunctions.rawWeatherDataMassager(raw_weather_data_df,
                                                             self.ltg_weather_massaged_output_path,
-                                                            self.hmn_weather_station_locations_path)
+                                                            self.ltg_weather_station_locations_path)
 
             # 4. Call the weather interpolation and binning executable through the following method.
             self.weatherInterpolationBinnerWrapper()
