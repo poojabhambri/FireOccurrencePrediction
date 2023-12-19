@@ -106,8 +106,8 @@ def runLightningFOPModel(config, date_to_predict_for, int_ltg_fire_holdover_look
                                              display_historical_fires_on_maps)
 
 def runHumanFOPModel(config, date_to_predict_for, float_hmn_fire_confidence_interval, display_historical_fires_on_maps, raw_weather_path, history_path):
-    print("in runHumanFOPModel()")
-    print("human_fop")
+    #print("in runHumanFOPModel()")
+    #print("human_fop")
     human_fop = HumanFireOccurrencePrediction(raw_weather_path,
 
                                                   config.get('FilePathsAndLocations', r'ltg_intermediate_data_folder'),
@@ -119,7 +119,7 @@ def runHumanFOPModel(config, date_to_predict_for, float_hmn_fire_confidence_inte
                                                   history_path
 
                                                   )
-    print("controller")
+    #print("controller")
     human_fop.humanFOPController(date_to_predict_for.date(),
 
                                      float_hmn_fire_confidence_interval,
@@ -163,8 +163,8 @@ def runGenerateLightningFireArrivalsCIDiagnosticGraph(config, start_day, end_day
                                                    int_ltg_fire_holdover_lookback_time,
                                                    float_ltg_fire_confidence_interval)
     except Exception:
-        print("runGenerateLightningFireArrivalsCIDiagnosticGraph(): Exception occurred in worker subprocess . . .")
-        traceback.print_exc()
+        #print("runGenerateLightningFireArrivalsCIDiagnosticGraph(): Exception occurred in worker subprocess . . .")
+        #traceback.print_exc()
         return -1  # Use -1 to indicate abnormal subprocess termination.
     return 0  # Use 0 to indicate normal subprocess termination
 
@@ -179,8 +179,8 @@ def runGenerateHumanFireArrivalsCIDiagnosticGraph(config, dates_to_graph, float_
         human_fop.humanFOPCIGraphGenerator(dates_to_graph,
                                            float_hmn_fire_confidence_interval)
     except Exception:
-        print("runGenerateHumanFireArrivalsCIDiagnosticGraph(): Exception occurred in worker subprocess . . .")
-        traceback.print_exc()
+        #print("runGenerateHumanFireArrivalsCIDiagnosticGraph(): Exception occurred in worker subprocess . . .")
+        #traceback.print_exc()
         return -1  # Use -1 to indicate abnormal subprocess termination.
     return 0  # Use 0 to indicate normal subprocess termination
 
@@ -345,7 +345,7 @@ def run_human_fop_model( __config,folder_path):
     except Exception as e:
         st.warning("The provided date does not exist in the raw weather dataset. Please provide a more up-to-date raw weather data file or adjust the prediction date and try again.")
 def clear_files_except_specific_folders(folder_path):
-    print("Clearing PNG files in folder:", folder_path)
+    #print("Clearing PNG files in folder:", folder_path)
     try:
         # Iterate over the items in the folder
         for item in os.listdir(folder_path):
@@ -354,9 +354,9 @@ def clear_files_except_specific_folders(folder_path):
             # Check if the item is a file and ends with ".png"
             if os.path.isfile(item_path) and item.lower().endswith('.png'):
                 os.remove(item_path)  # Remove the PNG file
-                print(f'Removed PNG file: {item_path}')
+                #print(f'Removed PNG file: {item_path}')
 
-        print('Cleared PNG and OUT files.')
+        #print('Cleared PNG and OUT files.')
 
     except Exception as e:
         print(f'An error occurred: {str(e)}')
@@ -442,7 +442,7 @@ def clearSystemStateDB():
         hmn_cumulative_probs_expvals_df = pd.DataFrame(columns=FOPConstantsAndFunctions.HMN_PROBABILITIES_EXPECTED_VALUES_HEADERS)
         hmn_cumulative_probs_expvals_df.to_csv(HMN_CUMULATIVE_PROBS_EXPVALS_PATH, sep=',', index=False)
 
-        print("FOPApplication.clearSystemStateDB(): FOP system state DB cleared, and saved computed probabilities and expected values files deleted.")
+        #print("FOPApplication.clearSystemStateDB(): FOP system state DB cleared, and saved computed probabilities and expected values files deleted.")
         return
 
 def switch_page(page_name, timeout_secs=3):
@@ -534,7 +534,7 @@ if __name__ == "__main__":
             st.session_state.selected_date is not None
         ):
             if st.session_state.model_run:
-                print("run_human_fop_model()")
+                #print("run_human_fop_model()")
                 run_human_fop_model( __config,"intermediate_output")
             else:
                 st.warning("Click run!")
