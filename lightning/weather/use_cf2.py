@@ -53,9 +53,9 @@ def main():
 
 
 
-    print("Before opening file...")
+    
     out = open(output_path_to_FWIGrid, "w")
-    print("After opening file...")
+    
     try:
         points = open(output_path_to_GridLocations, "r")
     except FileNotFoundError:
@@ -96,74 +96,7 @@ def main():
     points.close()
 
     err = 1
-    # while err and err >= 0:
-    #     codes = [[-999.9 for i in range(10)] for j in range(10010)]
-    #     for i in range(10):
-    #         anotherline = inp[i].readline()
-    #         if anotherline:
-    #             err = 10
-    #             # values = [int(float(val)) if r <=3 else float(val) for r, val in enumerate(anotherline.split())]
-    #             # err = len(values)
-    #             # print("look here", err)
-    #             # if err >= 1:
-    #             #     yr = values[0]
-    #             # if err >= 2:
-    #             #     mon = values[1]
-    #             # if err >= 3:
-    #             #     day = values[2]
-    #             # if err >= 4:
-    #             #     print("yup")
-    #             #     NUM = values[3]
-    #             # if err >= 5:
-    #             #     minimum = values[4]
-    #             # if err >= 6:
-    #             #     maximum = values[5]
-    #             # if err >= 7:
-    #             #     latmin = values[6]
-    #             # if err >= 8:
-    #             #     latmax = values[7]
-    #             # if err >= 9:
-    #             #     longmin = values[8]
-    #             # if err >= 10:
-    #             #     longmax = values[9]
-    #             yr = int(line[0:4])
-    #             mon = int(line[4:6])
-    #             day = int(line[6:8])
-    #             NUM = int(line[8:11])
-    #             min_val = float(line[11:17])
-    #             max_val = float(line[17:23])
-    #             latmin = float(line[23:30])
-    #             latmax = float(line[30:37])
-    #             longmin = float(line[37:44])
-    #             longmax = float(line[44:51])
-    #         else:
-    #             err = None
-    #         for k in range(600):
-    #             anotherline = inp[i].readline()
-    #             if anotherline:
-    #                 values = values = [float(anotherline[0:8]), float(anotherline[8:16]), float(anotherline[16:30])]
-    #                 err = len(values)
-    #                 if err >= 1:
-    #                     interp[k][0] = values[0]
-    #                 if err >= 2:
-    #                     interp[k][1] = values[1]
-    #                 if err >= 3:
-    #                     interp[k][2] = values[2]
-    #         if yr>1900:
-    #             for j in range(REGIONS):
-    #               lat=ERlocation[j][0]
-    #               lon=ERlocation[j][1]
-    #               if(NUM>0):
-    #                   #print("do we get here??")
-    #                   codes[j][i]=calculate(interp,NUM,lat,lon,minimum,maximum)
-    #     if err and err > 0:
-    #         #print(yr,mon,day)
-    #         for j in range(REGIONS):
-    #             if codes[j][1]>-900.0 and err>0:
-    #                 out.write(f"{ecoregion[j]},{yr},{mon},{day}")
-    #                 for i in range(10):
-    #                     out.write(f",{codes[j][i]:0.1f}")
-    #                 out.write("\n")
+
     while err and err >= 0:
         codes = [[-999.9 for i in range(10)] for j in range(10010)]
 
