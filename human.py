@@ -202,32 +202,12 @@ class HumanFireOccurrencePrediction(object):
         subprocess.run([f"{sys.executable}", "lightning/weather/cf-build-AB.py"])
         st.write("Done build and doing use")
         subprocess.run([f"{sys.executable}", "lightning/weather/use_cf2.py"])
-        # result2 = subprocess.run([sys.executable, "lightning/weather/use_cf2.py"] capture_output=True, text=True)
-        # if result2.returncode != 0:
-        #     st.write("Error in the second subprocess call:")
-        #     print(result2.stdout)
-        #     print(result2.stderr)
         file_path2 = "intermediate_output/3_weather_interpolation_coefficients/CF-dc.ab"
         file_path3 = "intermediate_output/3_weather_interpolation_coefficients/CF-dmc.ab"
         file_path4 = "intermediate_output/3_weather_interpolation_coefficients/CF-fwi.ab"
         file_path1 = "intermediate_output/3_weather_interpolation_coefficients/CF-bui.ab"
-        #with open(file_path1, 'r') as file:
-            #for line in file:
-                #print(line)
-        #print("THIS IS CF-dc")
-        #with open(file_path2, 'r') as file:
-            #for line in file:
-                #print(line)
-        #print("THIS IS CF-dmc")
-        #with open(file_path3, 'r') as file:
-            #for line in file:
-                #print(line)
-        #print("THIS IS CF-fwi.ab")
-        #with open(file_path4, 'r') as file:
-            #for line in file:
-                #print(line)
 
-        
+     
     
     def humanFOPProbabilitiesCalculator(self, date_to_predict_for):
         """ This method computes Human FOP expected values and probabilities per Alberta fishnet cell. """
@@ -254,7 +234,6 @@ class HumanFireOccurrencePrediction(object):
             # Loop through all of the rows in the variables file and calculate the probabilities and expected values on a per-fishnet ID basis.
             # Load up the Slopes region terms and variables file if we are to use the new version of the Slopes model.
             if USE_SLOPES_MODEL_V2:
-                # print("humanFOPProbabilitiesCalculator(): Using Slopes v2 model coefficients . . .")
                 slopes_all_terms_df = pd.read_excel(self.hmn_coefficients_path_slopes_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
                 slopes_all_variables_df = pd.read_csv(self.hmn_coefficients_path_slopes_all_variables, sep=',')
 
@@ -262,7 +241,6 @@ class HumanFireOccurrencePrediction(object):
             for _ , row_variable in variables_df.iterrows():
                 i = i + 1
                 # if i % 250 == 0:
-                    # print("humanFOPProbabilitiesCalculator(): Calculating row #%d. . ." % i)
                 
                 # Get the NSR (numerical code) for this fishnet.
                 nsr_numerical_code = hmn_fishnet_nsr_path_df.loc[hmn_fishnet_nsr_path_df['fishnet_AB'] == row_variable['FISHNET_AB']]['NSR'].values[0]
@@ -365,7 +343,6 @@ class HumanFireOccurrencePrediction(object):
                                                                                   (interpolated_binned_weather_df['year'] == date_to_predict_for.year) &
                                                                                   (interpolated_binned_weather_df['month'] == date_to_predict_for.month) &
                                                                                   (interpolated_binned_weather_df['day'] == date_to_predict_for.day))]['ffmc'].values[0], 1)
-                        # print("cell num: %d, ffmc_interp: %f, day_of_year_julian: %d, NSR: %d, ffmc_term: %f, day_of_year_term: %f, static_effects_variables_term: %f" % (row_variable['FISHNET_AB'], ffmc_interp, day_of_year_julian, row_variable['NATURE_REGION'], ffmc_term, day_of_year_term, static_effects_variables_term))
                         assert(old_logit != logit)
                 
                 # Calculate the probability for this grid cell using the inverse logit function.
@@ -397,61 +374,51 @@ class HumanFireOccurrencePrediction(object):
                 row_df.columns = FOPConstantsAndFunctions.HMN_PROBABILITIES_EXPECTED_VALUES_HEADERS
                 self.hmn_fop_probabilities_expected_values_df = self.hmn_fop_probabilities_expected_values_df.append(row_df)
         # Calgary forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Calgary forest region. . .")
         calgary_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_calgary_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         calgary_all_variables_df = pd.read_csv(self.hmn_coefficients_path_calgary_all_variables, sep=',')
         do_calculate_probabilities(calgary_all_terms_dfs, calgary_all_variables_df)
 
         # Edson forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Edson forest region. . .")
         edson_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_edson_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         edson_all_variables_df = pd.read_csv(self.hmn_coefficients_path_edson_all_variables, sep=',')
         do_calculate_probabilities(edson_all_terms_dfs, edson_all_variables_df)
 
         # Fort McMurray forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Fort McMurray forest region. . .")
         fort_mcmurray_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_fort_mcmurray_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         fort_mcmurray_all_variables_df = pd.read_csv(self.hmn_coefficients_path_fort_mcmurray_all_variables, sep=',')
         do_calculate_probabilities(fort_mcmurray_all_terms_dfs, fort_mcmurray_all_variables_df)
 
         # Grande Prairie forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Grande Prairie forest region. . .")
         grande_prairie_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_grande_prairie_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         grande_prairie_all_variables_df = pd.read_csv(self.hmn_coefficients_path_grande_prairie_all_variables, sep=',')
         do_calculate_probabilities(grande_prairie_all_terms_dfs, grande_prairie_all_variables_df)
 
         # High Level forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the High Level forest region. . .")
         high_level_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_high_level_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         high_level_all_variables_df = pd.read_csv(self.hmn_coefficients_path_high_level_all_variables, sep=',')
         do_calculate_probabilities(high_level_all_terms_dfs, high_level_all_variables_df)
 
         # Lac la Biche forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Lac la Biche forest region. . .")
         lac_la_biche_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_lac_la_biche_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         lac_la_biche_all_variables_df = pd.read_csv(self.hmn_coefficients_path_lac_la_biche_all_variables, sep=',')
         do_calculate_probabilities(lac_la_biche_all_terms_dfs, lac_la_biche_all_variables_df)
 
         # Peace River forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Peace River forest region. . .")
         peace_river_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_peace_river_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         peace_river_all_variables_df = pd.read_csv(self.hmn_coefficients_path_peace_river_all_variables, sep=',')
         do_calculate_probabilities(peace_river_all_terms_dfs, peace_river_all_variables_df)
 
         # Rocky Mountain House forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Rocky Mountain House forest region. . .")
         rocky_mountain_house_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_rocky_mountain_house_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         rocky_mountain_house_all_variables_df = pd.read_csv(self.hmn_coefficients_path_rocky_mountain_house_all_variables, sep=',')
         do_calculate_probabilities(rocky_mountain_house_all_terms_dfs, rocky_mountain_house_all_variables_df)
 
         # Slave Lake forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Slave Lake forest region. . .")
         slave_lake_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_slave_lake_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         slave_lake_all_variables_df = pd.read_csv(self.hmn_coefficients_path_slave_lake_all_variables, sep=',')
         do_calculate_probabilities(slave_lake_all_terms_dfs, slave_lake_all_variables_df)
 
         # Whitecourt forest region.
-        # print("humanFOPProbabilitiesCalculator(): Computing Human FOP probabilities for the Whitecourt forest region. . .")
         whitecourt_all_terms_dfs = pd.read_excel(self.hmn_coefficients_path_whitecourt_all_terms, sheet_name=None, index_col=0, engine='openpyxl')
         whitecourt_all_variables_df = pd.read_csv(self.hmn_coefficients_path_whitecourt_all_variables, sep=',')
         do_calculate_probabilities(whitecourt_all_terms_dfs, whitecourt_all_variables_df)
@@ -503,12 +470,10 @@ class HumanFireOccurrencePrediction(object):
         ci_low = int(round((0 + ((1 - (hmn_fire_confidence_interval / 100)) / 2) * NUM_SIMULATION_REPLICATIONS), 0))
         ci_high = int(round(float((NUM_SIMULATION_REPLICATIONS - ((1 - (hmn_fire_confidence_interval / 100)) / 2) * NUM_SIMULATION_REPLICATIONS))))
 
-        # print("humanSimulationConfidenceIntervalGenerator(): ci_low - 1 (array index) is %d" % int(ci_low - 1))
-        # print("humanSimulationConfidenceIntervalGenerator(): ci_high - 1 (array index) is %d" % int(ci_high - 1))
+
         # Start the simulation.
         for current_day in days_to_simulate:
 
-            # print("humanSimulationConfidenceIntervalGenerator(): Simulating the following day: ", current_day)
 
             # Determine the day of the year that we are simulating for.
             day_of_year = current_day.timetuple().tm_yday
@@ -655,10 +620,7 @@ class HumanFireOccurrencePrediction(object):
         ci_low = int(round((0 + ((1 - (hmn_fire_confidence_interval / 100)) / 2) * NUM_SIMULATION_REPLICATIONS), 0))
         ci_high = int(round(float((NUM_SIMULATION_REPLICATIONS - ((1 - (hmn_fire_confidence_interval / 100)) / 2) * NUM_SIMULATION_REPLICATIONS))))
 
-        # print("humanSimulationConfidenceIntervalGenerator(): ci_low - 1 (array index) is %d" % int(ci_low - 1))
-        # print("humanSimulationConfidenceIntervalGenerator(): ci_high - 1 (array index) is %d" % int(ci_high - 1))
 
-        # print("humanSimulationConfidenceIntervalGenerator(): Performing %d replications per day to simulate for." % NUM_SIMULATION_REPLICATIONS)
         # Start the simulation.
         for current_day in days_to_simulate:
 
@@ -1233,15 +1195,10 @@ class HumanFireOccurrencePrediction(object):
              # Perform a header check to determine the well-formed nature of the CSV.
             if list(raw_weather_data_df.columns) == FOPConstantsAndFunctions.RAW_WEATHER_CSV_HEADERS:
 
-                # Raw weather headers type 1.
-                # print("humanFOPController(): Raw weather data column check OK, headers type 1.")
                 raw_weather_data_df['weather_date'] = pd.to_datetime(raw_weather_data_df['weather_date'], format='%m/%d/%y %H:%M', infer_datetime_format=True)
 
             elif list(raw_weather_data_df.columns) == FOPConstantsAndFunctions.RAW_WEATHER_CSV_HEADERS_2:
                 
-                # Raw weather headers type 2.
-                # print("humanFOPController(): Raw weather data column check OK, headers type 2.")
-                # print("humanFOPController(): Making headers lower-case...")
                 
                 # Make all of the weather column headers to be lowercase.
                 raw_weather_data_df.columns = map(str.lower, raw_weather_data_df.columns)
@@ -1264,8 +1221,7 @@ class HumanFireOccurrencePrediction(object):
             # Perform the date selection for this dataframe; selection is inclusive.
             raw_weather_data_df = raw_weather_data_df.loc[date_mask_weather]
 
-            # print("humanFOPController(): Raw weather date selection is:")
-            # print(raw_weather_data_df)
+
 
             # Ensure that we actually have grabbed data for the date we want to predict for.
             if raw_weather_data_df.empty:
@@ -1292,19 +1248,13 @@ class HumanFireOccurrencePrediction(object):
             self.humanSimulationConfidenceIntervalGeneratorV2([date_to_predict_for], hmn_fire_confidence_interval)
 
             # 5. Update the FOP system state DB with the newly-processed dates.
-            # print("humanFOPController(): Updating FOP system state DB and writing changes to disk...")
-
-            # print("humanFOPController(): FOP system state DB prior to update is: ")
-            # print(self.fop_system_state_db_df)
 
             # Convert date_to_predict_for to a datetime64 for FOP system state DB indexing purposes.
             date_to_predict_for = pd.to_datetime(date_to_predict_for)
             
             # Update the row index at date_to_predict_for in the FOP system state DB as being predicted for.
             self.fop_system_state_db_df.at[date_to_predict_for, 'HUMAN_FOP_COMPLETED'] = 'Y'
-            
-            # print("humanFOPController(): FOP system state DB after update is:")
-            # print(self.fop_system_state_db_df)           
+                     
 
             # Write the new information to the DB on disk.
             self.fop_system_state_db_df.to_csv(self.fop_system_state_db_path, sep=',', index=True)
