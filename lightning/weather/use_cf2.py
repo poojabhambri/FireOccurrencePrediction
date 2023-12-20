@@ -84,7 +84,6 @@ def main():
         if anotherline:
             values = [int(val) if (i == 0 or i == 3) else float(val) for i, val in enumerate(anotherline.split())]
             err = len(values)
-            # print(values)
             if err >= 1:
                 ecoregion[REGIONS] = values[0]
             if err >= 2:
@@ -119,8 +118,7 @@ def main():
                 longmin = float(anotherline[37:44])
                 longmax = float(anotherline[44:51])
                 err = 10
-                # print("values")
-                # print(yr, mon, day, NUM, min_val, max_val, latmin, latmax, longmin, longmax)
+
             file_position = inp[i].tell()
             interp = [[-999.9 for _ in range(3)] for _ in range(600)]  # Initialize interp for each file
             x = 51
@@ -132,8 +130,6 @@ def main():
                     break
 
                 values = [float(interp_line[x:x+8]), float(interp_line[x+8:x+16]), float(interp_line[x+16:x+30])]
-                #print("values")
-                #print(values)
                 err = len(values)
 
                 if err >= 1:
@@ -150,19 +146,14 @@ def main():
                     lat = ERlocation[j][0]
                     lon = ERlocation[j][1]
                     if NUM > 0:
-                        # print("do we get here??")
                         codes[j][i] = calculate(interp, NUM, lat, lon, min_val, max_val)
 
         if err and err > 0:
-            # print("date")
-            # print(yr, mon, day)
             for j in range(REGIONS):
                 if codes[j][1] > -900.0 and err > 0:
-                    #print(f"{ecoregion[j]},{yr},{mon},{day}")
                     out.write(f"{ecoregion[j]},{yr},{mon},{day}")
                     for i in range(10):
-                        # print("codes here")
-                        # print(f",{codes[j][i]:0.1f}")
+
                         out.write(f",{codes[j][i]:0.1f}")
                     out.write("\n")
 
