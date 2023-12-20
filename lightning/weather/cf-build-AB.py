@@ -308,11 +308,9 @@ def main():
                 oldyr, oldmon, oldday = yr, mon, day
                 line = data.readline()
                 values = list(map(float, line.split()))
-                #print(values)
                 err2 = len(values)
                 if len(values) < 16 and len(values) > 0:
                     continue
-                #print("here is second on line 226",values)
                 if err2 > 0:
                     id, lat, lon, yr, mon, day, temp, rh, ws, rain, ffmc, dmc, dc, isi, bui, fwi = values
             if oldyr > 1900:
@@ -346,10 +344,8 @@ def main():
         
                             f"{oldyr:04.0f}{oldmon:02.0f}{oldday:02.0f}{int(NUM):03d}{min_val:06.1f}{max_val:06.1f}{latmin-1.5:07.2f}{latmax+1.5:07.2f}{longmin-3.0:07.2f}{longmax+3.0:07.2f}"
                         )
-                        #print("PRINTING j")
+                        
                         for j in range(600):
-                            #print("PRINTING CF[J]")
-                            #print(cf[j])
                             out[i].write(f"{interp[j][0]:08.3f}{interp[j][1]:08.3f}{cf[j]:014.6f}")
 
                         out[i].write("\n")
